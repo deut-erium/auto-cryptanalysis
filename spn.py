@@ -200,50 +200,47 @@ def calc_bias_no_sign(sbox):
         bias[i]=abs(bias[i])/n
     return bias
 
-
-    
-bias = calc_bias_no_sign(sbox)
-n=4
-sboxf = Function('sbox',BitVecSort(n),BitVecSort(n),RealSort())
-constraints = []
-for i in range(2**n):
-    for j in range(2**n):
-        constraints.append(sboxf(i,j)==bias[(i,j)])
-
-num_rounds=10
-
-s = Optimize()
-num_blocks = 4
-inps = [[BitVec('r{}_i{}'.format(r,i),4) for i in range(4)] 
-        for r in range(num_rounds)]
-oups = [[BitVec('r{}_o{}'.format(r,i),4) for i in range(4)] 
-        for r in range(num_rounds)]
-#inps2 = [BitVec('i2_{}'.format(i),4) for i in range(4)]
-#oups2 = [BitVec('o2_{}'.format(i),4) for i in range(4)]
-
-s.maximize( 2**(n*num_rounds-1)*Product([sboxf(inps[i//n][i%n],oups[i//n][i%n]) for i in range(n*num_rounds)]))
-
- 
-#s.maximize(Product(
-#    [sboxf(inps[i],oups[i]) for i in range(n)] +
-#    [sboxf(inps2[i],oups2[i]) for i in range(n)]
-#))
-s.add(constraints)
-s.add(Not(And( *[inps[0][i]==0 for i in range(n)])))
-for r in range(num_rounds):
-    s.add(Not(And(*[oups[r][i]==0 for i in range(n)])))
-
-
-
-def permutation(inp,oup,pbox):
-    n = len(pbox)
+def get_optimal_masks(sbox,pbox,num_rounds):
+    n = int(log2(len(sbox)))
+    num_blocks = len(pbox)//n
+    bias = calc_bias_no_sign(sbox)
+    sboxf = Function('sbox',BitVecSort(n),BitVecSort(n),RealSort())
     constraints = []
-    for i,v in enumerate(pbox):
-        constraints.append(Extract(n-1-i,n-1-i,inp)==Extract(n-1-v,n-1-v,oup))
-    return constraints
+    for i in range(2**n):
+        for j in range(2**n):
+            constraints.append(sboxf(i,j)==bias[(i,j)])
+    s = Optimize()
+    inps = [[BitVec('r{}_i{}'.format(r,i),4) for i in range(4)] 
+            for r in range(num_rounds)]
+    oups = [[BitVec('r{}_o{}'.format(r,i),4) for i in range(4)] 
+            for r in range(num_rounds)]
 
-for i in range(num_rounds-1):
-    s.add(permutation(Concat(oups[i]),Concat(inps[i+1]),pbox))
+    s.maximize(2**(n*num_rounds-1)*Product(
+        [sboxf(inps[i//n][i%n],oups[i//n][i%n]) for i in range(n*num_rounds)]))
+    def permutation(inp,oup,pbox):
+        n = len(pbox)
+        constraints = []
+        for i,v in enumerate(pbox):
+            constraints.append(Extract(n-1-i,n-1-i,inp)==Extract(n-1-v,n-1-v,oup))
+        return constraints
+
+    s.add(constraints)
+    s.add(Not(And( *[inps[0][i]==0 for i in range(n)])))
+    #s.add(Not(And(*[oups[r][i]==0 for i in range(n)])))
+    for r in range(num_rounds):
+        for i in range(n):
+            s.add(Implies(inps[r][i]!=0,oups[r][i]!=0))
+
+    for i in range(num_rounds-1):
+        s.add(permutation(Concat(oups[i]),Concat(inps[i+1]),pbox))
+
+    print(s.check())
+    m = s.model()
+    print(m.eval(2**(n*num_rounds-1)*Product(
+        [sboxf(inps[i//n][i%n],oups[i//n][i%n]) for i in range(n*num_rounds)])))
+    inp_masks = [ m.eval( Concat(inps[i])).as_long() for i in range(num_rounds) ]
+    oup_masks = [ m.eval( Concat(oups[i])).as_long() for i in range(num_rounds) ]
+    return inp_masks,oup_masks
 
 
 def p2(self,inp:int) -> int:
@@ -254,22 +251,21 @@ def p2(self,inp:int) -> int:
         ct |= (inp>>(BLOCK_SIZE-1-i)&1)<<(BLOCK_SIZE-1-v)
     return ct
 
-def bias_from_masks(inp_masks,oup_masks,bias):
+bias = calc_bias_no_sign(sbox)
+
+def bias_from_masks(inp_masks,oup_masks,bias,n_boxes=4):
+    n = int(log2(len(bias))/2)
     res = 1
     mod = (1<<4)-1
     for im,om in zip(inp_masks,oup_masks):
-        kprod = 2**3
-        for i in range(4):
+        kprod = 2**(n_boxes-1)
+        for i in range(n_boxes):
             kprod*= bias[(im&mod,om&mod)]
+            print(im&mod,om&mod,bias[(im&mod,om&mod)])
             im>>=4
             om>>=4
         res*=kprod
-    return kprod
-
-print(s.check())
-m = s.model()
-inp_masks = [ m.eval( Concat(inps[i])).as_long() for i in range(num_rounds) ]
-oup_masks = [ m.eval( Concat(oups[i])).as_long() for i in range(num_rounds) ]
+    return res
 
 #s.minimize(   )
 
