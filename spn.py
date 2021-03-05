@@ -11,16 +11,6 @@ from z3 import *
 from pairs import pairs
 import time
 
-sbox = [14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7]
-pbox = [0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15]
-
-
-SBOX = [237, 172, 175, 254, 173, 168, 187, 174, 53, 188, 165, 166, 161, 162, 131, 227, 191, 152, 63, 182, 169, 136, 171, 184, 149, 148, 183, 190, 181, 177, 163, 186, 207, 140, 143, 139, 147, 138, 155, 170, 134, 132, 135, 18, 193, 128, 129, 130, 157, 156, 151, 158, 153, 24, 154, 11, 141, 144, 21, 150, 146, 145, 179, 22, 245, 124, 236, 206, 105, 232, 43, 194, 229, 244, 247, 242, 233, 224, 235, 96, 253, 189, 219, 234, 241, 248, 251, 226, 117, 252, 213, 246, 240, 176, 249, 178, 205, 77, 231, 203, 137, 200, 107, 202, 133, 204, 228, 230, 225, 196, 195, 198, 201, 221, 199, 95, 216, 217, 159, 218, 209, 214, 215, 222, 83, 208, 211, 243, 44, 40, 46, 142, 32, 36, 185, 42, 45, 38, 47, 34, 33, 164, 167, 98, 41, 56, 55, 126, 57, 120, 59, 250, 37, 180, 119, 54, 52, 160, 51, 58, 5, 14, 79, 30, 8, 12, 13, 10, 68, 0, 39, 6, 1, 16, 3, 2, 23, 28, 29, 31, 27, 9, 7, 62, 4, 60, 19, 20, 48, 17, 87, 26, 239, 110, 111, 238, 109, 104, 35, 106, 101, 102, 103, 70, 49, 100, 99, 114, 61, 121, 223, 255, 88, 108, 123, 122, 84, 92, 125, 116, 112, 113, 115, 118, 197, 76, 15, 94, 73, 72, 75, 74, 81, 212, 69, 66, 65, 64, 97, 82, 93, 220, 71, 90, 25, 89, 91, 78, 85, 86, 127, 210, 80, 192, 67, 50]
-
-PBOX = [1, 57, 6, 31, 30, 7, 26, 45, 21, 19, 63, 48, 41, 2, 0, 3, 4, 15, 43, 16, 62, 49, 55, 53, 50, 25, 47, 32, 14, 38, 60, 13, 10, 23, 35, 36, 22, 52, 51, 28, 18, 39, 58, 42, 8, 20, 33, 27, 37, 11, 12, 56, 34, 29, 46, 24, 59, 54, 44, 5, 40, 9, 61, 17]
-
-SBOX2 = [13, 18, 20, 55, 23, 24, 34, 1, 62, 49, 11, 40, 36, 59, 61, 30, 33, 46, 56, 27, 41, 52, 14, 45, 0, 29, 39, 4, 8, 7, 17, 50, 2, 54, 12, 47, 35, 44, 58, 25, 10, 5, 19, 48, 43, 31, 37, 6, 21, 26, 32, 3, 15, 16, 22, 53, 38, 57, 63, 28, 60, 51, 9, 42]
-
 class SPN:
     def __init__(self,SBOX,PBOX,key,rounds):
         self.SBOX = SBOX
@@ -59,11 +49,19 @@ class SPN:
         return ct
          
     def int_to_list(self,inp):
+        """
+        converting len(self.PBOX) bit input to a list of 
+        sbox sized integers
+        """
         BS = self.BOX_SIZE
         return [ (inp>>(i*BS))&((1<<BS)-1) 
-                for i in range(self.NUM_SBOX-1,1,-1) ]
+                for i in range(self.NUM_SBOX-1,-1,-1) ]
 
     def list_to_int(self,lst):
+        """
+        converting a list of sbox sized integers to a len(pbox) sized
+        integer
+        """
         res = 0
         for i,v in enumerate(lst[::-1]):
             res |= v<<(i*self.BOX_SIZE)
@@ -87,6 +85,7 @@ class SPN:
             ct = self.sbox(ct)
             ct = self.perm(ct)
             ct^=round_key
+        # should the last round permute? i am confused
         return ct
     
     def dec(self,ct,round_keys,full=True):
@@ -124,6 +123,7 @@ class SPN:
         key_bits = [i for i in range(self.BLOCK_SIZE) 
                     if (block_perms>>i)&1  ]
         return inp_mask,out_mask,len(out_blocks),key_bits
+
 
     def key_into_bits(self,n,key_bits):
         key_int = 0
@@ -170,7 +170,8 @@ class SPN:
         for level in range(rounds):
             key = 0
             for i,v in self.distinct_io(rounds-1-level):
-                key_bits = self.parity_bias([i],[v],pt_ct_pairs,recovered_keys)
+                key_bits = self.parity_bias(
+                    [i],[v],pt_ct_pairs,recovered_keys)
                 key |= key_bits
                 print(self.int_to_list(key))
             recovered_keys.append(key)
@@ -178,6 +179,49 @@ class SPN:
             #for i in range(len(pt_ct_pairs)):
             #   pt_ct_pairs[i][1] = self.dec(pt_ct_pairs[i][1],[key])
         return recovered_keys
+
+    def parity_bias2(self,inp_mask,out_mask,i1,pt_ct_pairs,round_keys_rev,pos):
+        out_blocks = [0 for _ in range(self.NUM_SBOX)]
+        for p in pos:
+            out_blocks[p] = (1<<self.BOX_SIZE)-1
+        b_count = len(pos)
+        perm_block = self.perm(self.list_to_int(out_blocks))
+        key_bits = [i for i in range(self.BLOCK_SIZE) if (perm_block>>i)&1]
+        key_guesses = []
+        print(inp_mask,out_mask,i1,round_keys_rev,pos,key_bits)
+        for i in tqdm(range((1<<self.BOX_SIZE)**b_count)):
+            key = self.key_into_bits(i,key_bits)
+            bias = Counter()
+            for pt,ct in pt_ct_pairs:
+                ct_partial = self.dec(ct,round_keys_rev + [key],full=False)
+                bias[parity((pt&inp_mask)^(ct_partial&i1))]+=1
+            key_guesses.append(bias)
+        print(sorted((abs(key_guesses[i][1]-len(pt_ct_pairs)/2),i) 
+            for i in range( (1<<self.BOX_SIZE)**b_count )))
+
+        score,key_i = max((abs(key_guesses[i][1]-len(pt_ct_pairs)/2),i) 
+            for i in range( (1<<self.BOX_SIZE)**b_count ))
+        print("observed bias:",score/(len(pt_ct_pairs)))
+        return self.key_into_bits(key_i,key_bits)
+
+
+    def recover_key2(self,rounds,pt_ct_pairs):
+        recovered_keys = []
+        all_round_masks = get_all_pos_masks(self.SBOX,self.PBOX,rounds)
+        for round_masks in all_round_masks[::-1]:
+            key = 0
+            for pos,masks in enumerate(round_masks):
+                print(masks)
+                inp_mask,out_mask,bias = masks[0][0],masks[1][-1],masks[2]
+                i1 = masks[0][-1]
+                print("expected:",float(bias))
+                key_bits = self.parity_bias2(
+                inp_mask,out_mask,i1,pt_ct_pairs,recovered_keys,[pos])
+                key |= key_bits
+                print(self.int_to_list(key))
+            recovered_keys.append(key)
+        return recovered_keys
+        
 
 
 def ROTL(value, bits, size): return \
@@ -272,9 +316,9 @@ def get_optimal_masks(sbox,pbox,num_rounds,bias=None,non_zero=[0]):
     # reduced to as few sboxes as possible
     for i in range(num_blocks):
         if i in non_zero:
-            s.add(inps[-1][i]!=0)
+            s.add(oups[-1][i]!=0)
         else:
-            s.add(inps[-1][i]==0)
+            s.add(oups[-1][i]==0)
     #s.add(PbEq([(i!=0,1) for i in inps[-1]],1))
     for r in range(num_rounds):
         for i in range(num_blocks):
@@ -286,7 +330,7 @@ def get_optimal_masks(sbox,pbox,num_rounds,bias=None,non_zero=[0]):
                     sboxf(inps[r][i],oups[r][i])!=0
                 )
             )
-    for i in range(num_rounds):
+    for i in range(num_rounds-1):
         s.add(permutation(Concat(oups[i]),Concat(inps[i+1]),pbox))
     results = []
     #print("began searching")
@@ -337,11 +381,4 @@ def bias_from_masks(inp_masks,oup_masks,bias,n_boxes=4):
             om>>=4
     return res
 
-
-#s = SPN(SBOX,PBOX,b'ABCDEFGH',8)
-s = SPN(sbox,pbox,1231231,4)
-#pairs = []
-#for i in range(20000):
-#    x = random.getrandbits(s.BLOCK_SIZE)
-#    pairs.append([x,s.enc(x)])
 
