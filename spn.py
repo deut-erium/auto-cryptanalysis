@@ -239,43 +239,66 @@ def bias_order(bias):
     return sorted(bias.items(),key=lambda x: abs(x[1]),reverse=True)
 
 
-def calc_bias(sbox):
+def calc_bias(sbox,no_sign=True,fraction=False):
     n = len(sbox)
     bias = Counter({(i,j):-(n//2) for i in range(n) for j in range(n)})
     for imask in tqdm(range(n),desc='calculating sbox bias'):
         for omask in range(n):
             for i in range(n):
                 bias[(imask,omask)]+= parity((sbox[i]&omask)^(i&imask))^1
+    if no_sign:
+        for i in bias:
+            bias[i]=abs(bias[i])
+    if fraction:
+        for i in bias:
+            bias[i]/=n
     return bias
 
-def calc_bias_no_sign(sbox):
-    n = len(sbox)
-    bias = calc_bias(sbox)
-    for i in bias:
-        bias[i]=abs(bias[i])#/n
-    return bias
+def print_bitrelations(inp_masks,out_masks,n,s):
+    """
+    s = num bits in sbox
+    n = block size
+    """
+    def bin_sep(val):
+        v = bin(val)[2:].zfill(n)
+        return "|".join(v[i:i+s] for i in range(0,n,s))
+
+    rounds = len(out_masks)
+    for i in range(rounds):
+        imask,omask = inp_masks[i],out_masks[i]
+        print(bin_sep(imask))
+        print(' '.join(['-'*s]*(n//s)))
+        print(bin_sep(omask))
+        print()
+    print(bin_sep(inp_masks[-1]))
 
 
-def get_optimal_masks(sbox,pbox,num_rounds,bias=None,non_zero=[0]):
+def gen_pbox(s,n):
+    '''n s-bit sboxes'''
+    return [ (s*i+j)%(n*s) for j in range(s) for i in range(n) ]
+
+
+
+def get_optimal_masks(sbox,pbox,num_rounds,bias=None,non_zero=[0],prune_level=0):
     n = int(log2(len(sbox)))
     num_blocks = len(pbox)//n
     #print(n,num_blocks)
     if not bias:
-        bias = calc_bias_no_sign(sbox)
+        bias = calc_bias(sbox)
     sboxf = Function('sbox',BitVecSort(n),BitVecSort(n),RealSort())
     def permutation(inp,oup,pbox):
-        n = len(pbox)
+        pn = len(pbox)
         constraints = []
         for i,v in enumerate(pbox):
             constraints.append(
-                Extract(n-1-i,n-1-i,inp)==Extract(n-1-v,n-1-v,oup)
+                Extract(pn-1-i,pn-1-i,inp)==Extract(pn-1-v,pn-1-v,oup)
             )
         return constraints
     constraints = []
     for i in range(2**n):
         for j in range(2**n):
             # just some pruning of very small biases
-            if bias[(i,j)]>=2**(n//2):
+            if bias[(i,j)]>=2**(prune_level):
                 constraints.append(sboxf(i,j)==bias[(i,j)])
             else:
                 constraints.append(sboxf(i,j)==0)
@@ -314,40 +337,46 @@ def get_optimal_masks(sbox,pbox,num_rounds,bias=None,non_zero=[0]):
     s.add(Not(And( *[inps[0][i]==0 for i in range(num_blocks)])))
     # the last layer is input, which we would like to be
     # reduced to as few sboxes as possible
-    for i in range(num_blocks):
-        if i in non_zero:
-            s.add(oups[-1][i]!=0)
-        else:
-            s.add(oups[-1][i]==0)
-    #s.add(PbEq([(i!=0,1) for i in inps[-1]],1))
+    if non_zero: #if specified which boxes to look for
+        for i in range(num_blocks):
+            if i in non_zero:
+                s.add(inps[-1][i]!=0)
+            else:
+                s.add(inps[-1][i]==0)
     for r in range(num_rounds):
         for i in range(num_blocks):
+            # if sbox has input, it should have ouput
             s.add(Implies(inps[r][i]!=0,oups[r][i]!=0))
+            # if sbox has no input it should not have any output
             s.add(Implies(inps[r][i]==0,oups[r][i]==0))
+            # skip taking input/outputs with no bias
             s.add(
                 Implies(
                     And(inps[r][i]!=0,oups[r][i]!=0),
                     sboxf(inps[r][i],oups[r][i])!=0
                 )
             )
-    for i in range(num_rounds-1):
+    # permutation of output of sboxes are inputs of next round
+    for i in range(num_rounds):
         s.add(permutation(Concat(oups[i]),Concat(inps[i+1]),pbox))
     results = []
     #print("began searching")
     if s.check()==sat:
         m = s.model()
         inp_masks = [ m.eval( Concat(inps[i])).as_long() 
-                     for i in range(num_rounds) ]
+                     for i in range(num_rounds+1) ]
         oup_masks = [ m.eval( Concat(oups[i])).as_long() 
                          for i in range(num_rounds) ]
+        print_bitrelations(inp_masks,oup_masks,len(pbox),n)
         total_bias = m.eval(objectives[2]).as_fraction()
         print("total bias:",total_bias)
         return inp_masks,oup_masks,total_bias
 
+
 def get_all_pos_masks(sbox,pbox,num,num_key_blocks=1):
     n = int(log2(len(sbox)))
     num_blocks = len(pbox)//n
-    bias = calc_bias_no_sign(sbox)
+    bias = calc_bias(sbox)
     round_masks = []
     try:
         for num_rounds in range(1,num+1):
@@ -361,12 +390,6 @@ def get_all_pos_masks(sbox,pbox,num,num_key_blocks=1):
     except KeyboardInterrupt:
         return round_masks
     return round_masks
-
-
-
-
-
-#bias = calc_bias_no_sign(sbox)
 
 def bias_from_masks(inp_masks,oup_masks,bias,n_boxes=4):
     n = int(log2(len(bias))/2)
