@@ -10,23 +10,20 @@ from spn import SPN, gen_pbox
 def all_smt(s, initial_terms):
     def block_term(s, m, t):
         s.add(t != m.eval(t))
-
     def fix_term(s, m, t):
         s.add(t == m.eval(t))
-
     def all_smt_rec(terms):
         if sat == s.check():
-            m = s.model()
-            yield m
-            for i in range(len(terms)):
-                s.push()
-                block_term(s, m, terms[i])
-                for j in range(i):
-                    fix_term(s, m, terms[j])
-                yield from all_smt_rec(terms[i:])
-                s.pop()
+           m = s.model()
+           yield m
+           for i in range(len(terms)):
+               s.push()
+               block_term(s, m, terms[i])
+               for j in range(i):
+                   fix_term(s, m, terms[j])
+               yield from all_smt_rec(terms[i:])
+               s.pop()
     yield from all_smt_rec(list(initial_terms))
-
 
 class CharacteristicSolver:
     def __init__(self, sbox, pbox, num_rounds, mode='linear'):
@@ -146,7 +143,7 @@ class CharacteristicSolver:
                     )
                 )
 
-    def init_characteristic_solver(self, bias_inp='linear', prune_level=0):
+    def init_characteristic_solver(self, prune_level=0):
         self.initialize_sbox_structure()
         self.sboxf = Function(
             'sbox', BitVecSort(
@@ -176,6 +173,7 @@ class CharacteristicSolver:
         # specify which blocks to definitely exclude in the characteristic
         for i in exclude_blocks:
             self.solver.add(self.inps[num_rounds - 1][i] == 0)
+        print(include_blocks, exclude_blocks)
         # if a block is neither in include_blocks or exclude_blocks
         # the solver finds the best path which may or may not set it to active
         self.solver.maximize(self.objectives['reduced'](num_rounds))
@@ -183,23 +181,81 @@ class CharacteristicSolver:
         self.solutions[(tuple(sorted(include_blocks)),
                         tuple(sorted(exclude_blocks)))].extend(solutions)
         return [(inp_masks[0], inp_masks[-1], calc_bias)
-                for inp_masks, _, calc_bias in solutions]
+                for inp_masks, _, calc_bias, _ in solutions]
+
+
+    def search_best_masks(self, tolerance=1, choose_best=100,display_paths=True):
+        prune_level = self.init_best_pruning()
+        nr = self.num_rounds
+        discovered = [False for _ in range(self.num_blocks)]
+        istolerable = lambda x:sum((not i) and j for i,j in zip(discovered, x[3])) in range(1,tolerance+1)
+        masks = []
+        while self.solver.check()==sat:
+            curr_masks = self.get_masks(self.num_rounds, choose_best ,display_paths=False)
+            curr_masks = list(filter(istolerable, curr_masks))
+            if len(curr_masks):
+                inp_masks, oup_masks, total_bias, active = max(curr_masks, key=lambda x:x[2])
+                if display_paths:
+                    self.print_bitrelations(inp_masks, oup_masks)
+                    print("total bias:", total_bias)
+                    print()
+                masks.append((inp_masks[0], inp_masks[nr-1], total_bias))
+                for i,v in enumerate(discovered):
+                    if (not v) and active[i]:
+                        discovered[i] = True
+                print("discovered", "".join(map(lambda x: str(int(x)),discovered)))
+                # dont discover biases where all the active blocks come from discovered blocks
+                # i.e. if all the active blocks come from discovered blocks,
+                # it means, all the undiscovered blocks are inactive
+                # i.e it should not be the case where all the undiscovered blocks are
+                # inactive i.e 0
+                self.solver.add(Not(And([self.inps[nr-1][i]==0 for i,v in enumerate(discovered) if not v])))
+        return masks
+
+
+    def init_best_pruning(self):
+        self.initialize_sbox_structure()
+        self.sboxf = Function(
+            'sbox', BitVecSort(
+                self.box_size), BitVecSort(
+                self.box_size), RealSort())
+        self.initialize_objectives()
+        assert self.solver.check()
+        print("searching best pruning level")
+        low, high = 0, len(self.sbox)//4
+        while low <= high:
+            mid = (low+high)//2
+            print("trying pruning",mid)
+            self.solver.push()
+            self.add_bias_constraints(mid)
+            if self.solver.check() == sat:
+                print("success")
+                low = mid + 1
+            else:
+                print("failure")
+                high = mid - 1
+            self.solver.pop()
+        self.add_bias_constraints(high)
+        print("best pruning", high)
+        return high
+
 
     def get_masks(self, num_rounds, n=1, display_paths=True):
         masks = []
         for m in islice(all_smt(
-                self.solver, [self.bv_inp_masks[0], self.bv_inp_masks[num_rounds - 1]]), n):
+                self.solver, [self.bv_inp_masks[num_rounds - 1]]), n):
             inp_masks = [m.eval(i).as_long()
                          for i in self.bv_inp_masks[:num_rounds]]
             oup_masks = [m.eval(i).as_long()
                          for i in self.bv_oup_masks[:num_rounds]]
             total_bias = m.eval(
                 self.objectives[self.mode](num_rounds)).as_fraction()
+            active = [m.eval(i).as_long()!=0 for i in self.inps[num_rounds-1]]
             if display_paths:
                 self.print_bitrelations(inp_masks, oup_masks)
                 print("total bias:", total_bias)
                 print()
-            masks.append((inp_masks, oup_masks, total_bias))
+            masks.append((inp_masks, oup_masks, total_bias, active))
         return masks
 
     def print_bitrelations(self, inp_masks, out_masks):
@@ -326,15 +382,39 @@ class Cryptanalysis(SPN):
 #             key_diffcounts[key] += all(out_blocks[i] == diff[i] for i in active_blocks)
 #     return key_diffcounts.most_common()[0]
 
-# sbox = list(range(2**5))
-# pbox = list(range(5*5))
 
-# random.shuffle(sbox)
-# random.shuffle(pbox)
+s = 4
+n = 16*s
+
+def bin_sep(val):
+    v = bin(val)[2:].zfill(n)
+    return "|".join(v[i:i + s] for i in range(0, n, s))
+
+sbox = list(range(2**s))
+pbox = list(range(n))
+
+random.shuffle(sbox)
+random.shuffle(pbox)
+
+sbox = [3, 10, 6, 8, 15, 1, 13, 4, 11, 2, 5, 0, 7, 14, 9, 12]
+pbox = [0, 16, 32, 48, 1, 17, 33, 49, 2, 18, 34, 50, 3, 19, 35, 51, 4, 20, 36, 52, 5, 21, 37, 53, 6, 22, 38, 54, 7, 23, 39, 55, 8, 24, 40, 56, 9, 25, 41, 57, 10, 26, 42, 58, 11, 27, 43, 59, 12, 28, 44, 60, 13, 29, 45, 61, 14, 30, 46, 62, 15, 31, 47, 63]
 # # c = Cryptanalysis(sbox, pbox, 4)
-# c = CharacteristicSolver(sbox, pbox, 10)
-# c.init_characteristic_solver('linear',2)
-# # c.solve_for_blocks(include_blocks=(1,2),exclude_blocks=(0,3,4),num_rounds=7,num_sols=20)
+c = CharacteristicSolver(sbox, pbox, 13, 'differential')
+# c.init_best_pruning()
+x=c.search_best_masks(3, choose_best=1)
+# c.init_characteristic_solver(2)
+# print("success", c.bias.most_common(20))
+
+# x =c.solve_for_blocks(num_rounds=10,num_sols=(n//s)**2)
+
+# outs = sorted([i[1] for i in x])
+# for i in outs:
+#     print(bin_sep(i))
+for i in x:
+    print(bin_sep(i[1]), float(1/i[2]), i[2])
+
+
+# c.solve_for_blocks(include_blocks=(1,2),exclude_blocks=(0,3,4),num_rounds=7,num_sols=20)
 # x = c.solve_for_blocks(include_blocks=(0,),exclude_blocks=(1,2,3,4),num_rounds=5,num_sols=20)
 
 # for sbox_size in [4,5]:
