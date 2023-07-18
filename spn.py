@@ -1,5 +1,20 @@
 from math import log2
 
+def rotate_left(val, shift, mod):
+    """
+    Rotate the bits of the value to the left by the shift amount.
+
+    The function rotates the bits of the value to the left by the shift amount,
+    wrapping the bits that overflow. The result is then masked by (1<<mod)-1
+    to only keep the mod number of least significant bits.
+
+    :param val: Integer, the value to be rotated.
+    :param shift: Integer, the number of places to shift the value to the left.
+    :param mod: Integer, the modulo to be applied on the result.
+    :return: Integer, the rotated value.
+    """
+    shift = shift % mod
+    return (val << shift | val >> (mod - shift)) & ((1 << mod) - 1)
 
 def gen_pbox(s, n):
     """
@@ -143,9 +158,8 @@ class SPN:
         key = key & block_mask
         keys = [key]
         for _ in range(rounds):
-            # blah blah blah whatever
-            key = hash(str(key)) & block_mask
-            keys.append(key)
+            keys.append(self.sbox(rotate_left(
+                keys[-1], self.BOX_SIZE + 1, self.BLOCK_SIZE)))
         return keys
 
     def _enc_last_noperm(self, pt: int) -> int:
