@@ -7,25 +7,29 @@ from itertools import product, islice
 from fractions import Fraction
 from z3 import *
 from spn import SPN, gen_pbox
+from abc import ABC, abstractmethod
 
 
 def all_smt(s, initial_terms):
     def block_term(s, m, t):
         s.add(t != m.eval(t))
+
     def fix_term(s, m, t):
         s.add(t == m.eval(t))
+
     def all_smt_rec(terms):
         if sat == s.check():
-           m = s.model()
-           yield m
-           for i in range(len(terms)):
-               s.push()
-               block_term(s, m, terms[i])
-               for j in range(i):
-                   fix_term(s, m, terms[j])
-               yield from all_smt_rec(terms[i:])
-               s.pop()
+            m = s.model()
+            yield m
+            for i in range(len(terms)):
+                s.push()
+                block_term(s, m, terms[i])
+                for j in range(i):
+                    fix_term(s, m, terms[j])
+                yield from all_smt_rec(terms[i:])
+                s.pop()
     yield from all_smt_rec(list(initial_terms))
+
 
 class CharacteristicSolver:
     def __init__(self, sbox, pbox, num_rounds, mode='linear'):
@@ -45,10 +49,10 @@ class CharacteristicSolver:
     def initialize_sbox_structure(self):
         n = self.box_size
         self.solver = Optimize()
-        self.inps = [[BitVec('r{}_i{}'.format(r, i), n) for i in range(
-            self.num_blocks)] for r in range(self.num_rounds + 1)]
-        self.oups = [[BitVec('r{}_o{}'.format(r, i), n) for i in range(
-            self.num_blocks)] for r in range(self.num_rounds)]
+        self.inps = [[BitVec('r{}_i{}'.format(r, i), n)
+                      for i in range(self.num_blocks)] for r in range(self.num_rounds + 1)]
+        self.oups = [[BitVec('r{}_o{}'.format(r, i), n) for i in range(self.num_blocks)]
+                     for r in range(self.num_rounds)]
         # permutation of output of sboxes are inputs of next round
         for i in range(self.num_rounds):
             if self.num_blocks == 1:
@@ -145,7 +149,6 @@ class CharacteristicSolver:
                     )
                 )
 
-
     def init_characteristic_solver(self, prune_level=-1):
         self.initialize_sbox_structure()
         self.sboxf = Function(
@@ -155,12 +158,12 @@ class CharacteristicSolver:
         self.initialize_objectives()
         assert self.solver.check()
 
-        if prune_level<0:
+        if prune_level < 0:
             print("searching best pruning level")
-            low, high = 0, len(self.sbox)//4
+            low, high = 0, len(self.sbox) // 4
             while low <= high:
-                mid = (low+high)//2
-                print("trying pruning",mid)
+                mid = (low + high) // 2
+                print("trying pruning", mid)
                 self.solver.push()
                 self.solver.set(timeout=10000)
                 self.add_bias_constraints(mid)
@@ -181,13 +184,9 @@ class CharacteristicSolver:
                 self.prune_level = prune_level
             else:
                 print("Provided pruning level unsat, searching optimal pruning")
-                self.init_characteristic_solver(-1) # search best pruning
+                self.init_characteristic_solver(-1)  # search best pruning
 
-
-    def solve_for_blocks(
-            self,
-            include_blocks=[],
-            exclude_blocks=[],
+    def solve_for_blocks(self, include_blocks=[], exclude_blocks=[],
             num_rounds=0,
             num_sols=1,
             display_paths=True):
@@ -214,38 +213,43 @@ class CharacteristicSolver:
         return [(inp_masks[0], inp_masks[-1], calc_bias)
                 for inp_masks, _, calc_bias, _ in solutions]
 
-
-    def search_best_masks(self, tolerance=1, choose_best=10,display_paths=True):
-        prune_level = self.init_best_pruning()
+    def search_best_masks(self, tolerance=1, choose_best=10, display_paths=True):
+        prune_level = self.init_characteristic_solver()
         nr = self.num_rounds
         discovered = [False for _ in range(self.num_blocks)]
-        istolerable = lambda x:sum((not i) and j for i,j in zip(discovered, x[3])) in range(1,tolerance+1)
+
+        def istolerable(x):
+            return sum((not i) and j
+                       for i, j in zip(discovered, x[3])) in range(1, tolerance + 1)
         masks = []
-        while self.solver.check()==sat:
-            curr_masks = self.get_masks(self.num_rounds, choose_best ,display_paths=False)
+        while self.solver.check() == sat:
+            curr_masks = self.get_masks(self.num_rounds, choose_best, display_paths=False)
             for i in curr_masks:
                 self.solutions[i[2]].append(i)
             curr_masks = list(filter(istolerable, curr_masks))
             if len(curr_masks):
-                inp_masks, oup_masks, total_bias, active = max(curr_masks, key=lambda x:(x[2],-sum(x[3])))
+                inp_masks, oup_masks, total_bias, active = max(
+                    curr_masks, key=lambda x: (x[2], -sum(x[3])))
                 if display_paths:
                     self.print_bitrelations(inp_masks, oup_masks)
                     print("total bias:", total_bias)
                     print()
-                masks.append((inp_masks[0], inp_masks[nr-1], total_bias))
-                for i,v in enumerate(discovered):
+                masks.append((inp_masks[0], inp_masks[nr - 1], total_bias))
+                for i, v in enumerate(discovered):
                     if (not v) and active[i]:
                         discovered[i] = True
-                print("discovered", "".join(map(lambda x: str(int(x)),discovered)))
+                print("discovered", "".join(map(lambda x: str(int(x)), discovered)))
                 # dont discover biases where all the active blocks come from discovered blocks
                 # i.e. if all the active blocks come from discovered blocks,
                 # it means, all the undiscovered blocks are inactive
                 # i.e it should not be the case where all the undiscovered blocks are
                 # inactive i.e 0
-                self.solver.add(Not(And([self.inps[nr-1][i]==0 for i,v in enumerate(discovered) if not v])))
+                self.solver.add(Not(And(
+                        [self.inps[nr - 1][i] == 0 for i, v in enumerate(discovered) if not v]
+                        )))
         return masks
 
-    def search_exclusive_masks(self, choose_best=1, display_paths=True, prune_level = -1):
+    def search_exclusive_masks(self, choose_best=1, display_paths=True, prune_level=-1):
         self.init_characteristic_solver(prune_level)
         masks = []
         for i in range(self.num_blocks):
@@ -256,15 +260,14 @@ class CharacteristicSolver:
 
     def get_masks(self, num_rounds, n=1, display_paths=True):
         masks = []
-        for m in islice(all_smt(
-                self.solver, [self.bv_inp_masks[num_rounds - 1]]), n):
+        for m in islice(all_smt( self.solver, [self.bv_inp_masks[num_rounds - 1]]), n):
             inp_masks = [m.eval(i).as_long()
                          for i in self.bv_inp_masks[:num_rounds]]
             oup_masks = [m.eval(i).as_long()
                          for i in self.bv_oup_masks[:num_rounds]]
             total_bias = m.eval(
                 self.objectives[self.mode](num_rounds)).as_fraction()
-            active = [m.eval(i).as_long()!=0 for i in self.inps[num_rounds-1]]
+            active = [m.eval(i).as_long() != 0 for i in self.inps[num_rounds - 1]]
             if display_paths:
                 self.print_bitrelations(inp_masks, oup_masks)
                 print("total bias:", total_bias)
@@ -296,12 +299,13 @@ class CharacteristicSolver:
         print(bin_sep(inp_masks[-1]))
 
 
-class Cryptanalysis(SPN):
+class Cryptanalysis(SPN, ABC):
     def __init__(self, sbox, pbox, num_rounds, mode='differential'):
-        super(Cryptanalysis, self).__init__(sbox, pbox, 0, num_rounds)
+        super().__init__(sbox, pbox, 0, num_rounds)
         self.mode = mode
-        self.characteristic_searcher = CharacteristicSolver(self.SBOX, self.PBOX, num_rounds-1, mode)
-        self.encryptions = {} #store of the encryptions utilized by the cryptanalysis
+        self.characteristic_searcher = CharacteristicSolver(
+            self.SBOX, self.PBOX, num_rounds - 1, mode)
+        self.encryptions = {}  # store of the encryptions utilized by the cryptanalysis
 
     def dec_partial_last_noperm(self, ct, round_keys):
         # partial decryption
@@ -354,8 +358,7 @@ class Cryptanalysis(SPN):
         for imask in tqdm(range(n), desc='calculating sbox bias'):
             for omask in range(n):
                 for i in range(n):
-                    bias[(imask, omask)] += Cryptanalysis.parity((sbox[i]
-                                                                  & omask) ^ (i & imask)) ^ 1
+                    bias[(imask, omask)] += Cryptanalysis.parity((sbox[i] & omask) ^ (i & imask)) ^ 1
         if no_sign:
             for i in bias:
                 bias[i] = abs(bias[i])
@@ -370,7 +373,8 @@ class Cryptanalysis(SPN):
         Calculate the difference table for an S-box.
 
         :param sbox: List of integers, representing the S-box.
-        :return: Counter dictionary, containing the count of output differences for each input difference.
+        :return: Counter dictionary, containing the count of output
+                differences for each input difference.
         """
         n = len(sbox)
         bias = Counter()
@@ -380,51 +384,13 @@ class Cryptanalysis(SPN):
                 bias[(inp_diff, out_diff)] += 1
         return bias
 
-
-    def find_keybits_differential(self,out_mask, ct_pairs, known_keyblocks=[]):
-        out_blocks = self.int_to_list(out_mask)
-        active_blocks = [i for i,v in enumerate(out_blocks) if v and i not in known_keyblocks]
-        key_diffcounts = Counter()
-        pairs=defaultdict(list)
-        for klst in product(range(len(self.SBOX)), repeat=len(active_blocks)):
-            key = [0]*self.NUM_SBOX
-            for i,v in zip(active_blocks, klst):
-                key[i] = v
-            key = self.list_to_int(key)
-            for ct1,ct2 in ct_pairs:
-                diff = self.dec_partial_last_noperm(ct1, [key])^self.dec_partial_last_noperm(ct2,[key])
-                diff = self.int_to_list(diff)
-                key_diffcounts[key] += all(out_blocks[i] == diff[i] for i in active_blocks)
-                # key_diffcounts[key] += all(i==j for i,j in zip(out_blocks,diff))
-        topn = key_diffcounts.most_common(self.BOX_SIZE)
-        for i,v in topn:
-            print(self.int_to_list(i), v)
-        return topn[0]
-
-
-    def find_last_roundkey_differential(self, outmasks, cutoff=10000):
-        final_key = [None]*self.NUM_SBOX
-        all_pt_ct_pairs = self.generate_ct_pairs_differential(outmasks, cutoff)
-        for pt_ct_pairs, (inp_mask, out_mask, bias) in zip(all_pt_ct_pairs,outmasks):
-            ct_pairs = [i[1] for i in pt_ct_pairs]
-            # print("out mask",self.int_to_list(out_mask))
-            k = self.find_keybits_differential(out_mask, ct_pairs, [i for i,v in enumerate(final_key) if v is not None])
-            kr = self.int_to_list(k[0])
-            print(kr)
-            for i,v in enumerate(self.int_to_list(out_mask)):
-                if v and final_key[i] is None:
-                    final_key[i] = kr[i]
-            print(final_key)
-            print()
-        return final_key
-
     def update_encryptions(self, multiple=10000):
-        to_encrypt = [i for i,v in self.encryptions.items() if v is None]
-        for i in range(0,len(to_encrypt)+multiple, multiple):
-            current_batch = to_encrypt[i:i+multiple]
+        to_encrypt = [i for i, v in self.encryptions.items() if v is None]
+        for i in range(0, len(to_encrypt) + multiple, multiple):
+            current_batch = to_encrypt[i:i + multiple]
             if current_batch == []:
                 break
-            for j,e in zip(current_batch,self.batch_encrypt(current_batch)):
+            for j, e in zip(current_batch, self.batch_encrypt(current_batch)):
                 self.encryptions[j] = e
 
     def batch_encrypt(self, pt_list):
@@ -433,7 +399,61 @@ class Cryptanalysis(SPN):
         """
         return [self.encrypt(i) for i in pt_list]
 
-    def generate_ct_pairs_differential(self, outmasks, cutoff=10000):
+    @abstractmethod
+    def find_keybits(self, in_mask, out_mask, encryption_pairs, known_keyblocks=[]):
+        pass
+
+    @abstractmethod
+    def generate_encryption_pairs(self, outmasks):
+        pass
+
+    @abstractmethod
+    def find_last_roundkey(self, outmasks, cutoff):
+        pass
+
+class DifferentialCryptanalysis(Cryptanalysis):
+    def __init__(self, sbox, pbox, num_rounds):
+        super().__init__(sbox, pbox, num_rounds, 'differential')
+
+    def find_keybits(self, out_mask, ct_pairs, known_keyblocks=[]):
+        out_blocks = self.int_to_list(out_mask)
+        active_blocks = [i for i, v in enumerate(out_blocks) if v and i not in known_keyblocks]
+        key_diffcounts = Counter()
+        pairs = defaultdict(list)
+        for klst in product(range(len(self.SBOX)), repeat=len(active_blocks)):
+            key = [0] * self.NUM_SBOX
+            for i, v in zip(active_blocks, klst):
+                key[i] = v
+            key = self.list_to_int(key)
+            for ct1, ct2 in ct_pairs:
+                diff = self.dec_partial_last_noperm(ct1, [key]) ^ self.dec_partial_last_noperm(ct2, [key])
+                diff = self.int_to_list(diff)
+                key_diffcounts[key] += all(out_blocks[i] == diff[i] for i in active_blocks)
+                # key_diffcounts[key] += all(i==j for i,j in zip(out_blocks,diff))
+        topn = key_diffcounts.most_common(self.BOX_SIZE)
+        for i, v in topn:
+            print(self.int_to_list(i), v)
+        return topn[0]
+
+    def find_last_roundkey(self, outmasks, cutoff=10000):
+        final_key = [None] * self.NUM_SBOX
+        all_pt_ct_pairs = self.generate_encryption_pairs(outmasks, cutoff)
+        for pt_ct_pairs, (inp_mask, out_mask, bias) in zip(all_pt_ct_pairs, outmasks):
+            ct_pairs = [i[1] for i in pt_ct_pairs]
+            # print("out mask",self.int_to_list(out_mask))
+            k = self.find_keybits(out_mask, ct_pairs, [
+                    i for i, v in enumerate(final_key) if v is not None])
+            kr = self.int_to_list(k[0])
+            print(kr)
+            for i, v in enumerate(self.int_to_list(out_mask)):
+                if v and final_key[i] is None:
+                    final_key[i] = kr[i]
+            print(final_key)
+            print()
+        return final_key
+
+
+    def generate_encryption_pairs(self, outmasks, cutoff=10000):
         """
         get pt-ct pairs for a set of differentials such that number of
         encryptions is minimised
@@ -441,8 +461,8 @@ class Cryptanalysis(SPN):
         all_pt_pairs = []
         for inp_mask, out_mask, bias in outmasks:
             pt_pairs = []
-            new_encs = {} #new encryptions + seen encryptions
-            threshold = min(100*int(1/bias), cutoff)
+            new_encs = {}  # new encryptions + seen encryptions
+            threshold = min(100 * int(1 / bias), cutoff)
             # first pass, look for already existing pairs
             for i in self.encryptions:
                 if len(pt_pairs) >= threshold:
@@ -450,26 +470,26 @@ class Cryptanalysis(SPN):
                 if i in new_encs:
                     # already added the pair i.e i^inp_mask
                     continue
-                if i^inp_mask in self.encryptions:
+                if i ^ inp_mask in self.encryptions:
                     new_encs[i] = self.encryptions[i]
-                    new_encs[i^inp_mask] =self.encryptions[i^inp_mask]
-                    pt_pairs.append((i, i^inp_mask))
+                    new_encs[i ^ inp_mask] = self.encryptions[i ^ inp_mask]
+                    pt_pairs.append((i, i ^ inp_mask))
             for i in set(self.encryptions) - set(new_encs):
                 if len(pt_pairs) >= threshold:
                     break
                 # only add if we have exhausted our already encrypted pairs
                 new_encs[i] = self.encryptions[i]
                 # new_encs[i^inp_mask] = self.encrypt(i^inp_mask)
-                new_encs[i^inp_mask] = None #marked to be encrypted
-                pt_pairs.append((i, i^inp_mask))
+                new_encs[i ^ inp_mask] = None  # marked to be encrypted
+                pt_pairs.append((i, i ^ inp_mask))
             self.encryptions |= new_encs
             while len(pt_pairs) < threshold:
-                r = random.randint(0,2**(self.NUM_SBOX*self.BOX_SIZE)-1)
-                if r in self.encryptions or r^inp_mask in self.encryptions:
+                r = random.randint(0, 2**(self.NUM_SBOX * self.BOX_SIZE) - 1)
+                if r in self.encryptions or r ^ inp_mask in self.encryptions:
                     continue
                 self.encryptions[r] = None
-                self.encryptions[r^inp_mask] = None
-                pt_pairs.append((r, r^inp_mask))
+                self.encryptions[r ^ inp_mask] = None
+                pt_pairs.append((r, r ^ inp_mask))
             all_pt_pairs.append(pt_pairs)
 
         self.update_encryptions()
@@ -478,52 +498,62 @@ class Cryptanalysis(SPN):
         for pt_pairs in all_pt_pairs:
             pt_ct_pairs = []
             for (p1, p2) in pt_pairs:
-                pt_ct_pairs.append(((p1, p2),(self.encryptions[p1], self.encryptions[p2])))
+                pt_ct_pairs.append(
+                    ((p1, p2), (self.encryptions[p1], self.encryptions[p2])))
             all_pt_ct_pairs.append(pt_ct_pairs)
         return all_pt_ct_pairs
 
 
-    def find_keybits_linear(self, in_mask, out_mask, ptct_pairs, known_keyblocks=[]):
+class LinearCryptanalysis(Cryptanalysis):
+    def __init__(self, sbox, pbox, num_rounds):
+        super().__init__(sbox, pbox, num_rounds, 'linear')
+
+    def find_keybits(self, in_mask, out_mask, ptct_pairs, known_keyblocks=[]):
         out_blocks = self.int_to_list(out_mask)
-        active_blocks = [i for i,v in enumerate(out_blocks) if v and i not in known_keyblocks]
+        active_blocks = [i for i, v in enumerate(
+            out_blocks) if v and i not in known_keyblocks]
         key_diffcounts = Counter()
         for klst in product(range(len(self.SBOX)), repeat=len(active_blocks)):
-            key = [0]*self.NUM_SBOX
-            for i,v in zip(active_blocks, klst):
+            key = [0] * self.NUM_SBOX
+            for i, v in zip(active_blocks, klst):
                 key[i] = v
             key = self.list_to_int(key)
-            for pt,ct in ptct_pairs:
+            for pt, ct in ptct_pairs:
                 ct_last = self.dec_partial_last_noperm(ct, [key])
-                key_diffcounts[key] += self.parity((pt&in_mask)^(ct_last&out_mask))
+                key_diffcounts[key] += self.parity((pt & in_mask) ^ (ct_last & out_mask))
         for i in key_diffcounts:
-            key_diffcounts[i] = abs(key_diffcounts[i]-len(ptct_pairs)//2)
+            key_diffcounts[i] = abs(key_diffcounts[i] - len(ptct_pairs) // 2)
         topn = key_diffcounts.most_common(self.BOX_SIZE)
-        for i,v in topn:
+        for i, v in topn:
             print(self.int_to_list(i), v)
         return topn[0]
 
-    def find_last_roundkey_linear(self, outmasks, cutoff=50000):
-        final_key = [None]*self.NUM_SBOX
-        for inp_mask, out_mask, bias in outmasks:
-            print("out mask",self.int_to_list(out_mask))
-            ptct_pairs = set()
-            while len(ptct_pairs) <min(100*int(1/(bias*bias)),cutoff):
-                r = random.randint(0,2**(self.NUM_SBOX*self.BOX_SIZE)-1)
-                ptct_pairs.add((r, self.encrypt(r)))
-            k = self.find_keybits_linear(inp_mask, out_mask, ptct_pairs, [i for i,v in enumerate(final_key) if v is not None])
-            print("observed bias", k[1]/len(ptct_pairs), "required",float(bias))
+    def find_last_roundkey(self, outmasks, cutoff=50000):
+        final_key = [None] * self.NUM_SBOX
+        all_pt_ct_pairs = self.generate_encryption_pairs(outmasks, cutoff)
+        for ptct_pairs, (inp_mask, out_mask, bias) in zip(all_pt_ct_pairs, outmasks):
+            k = self.find_keybits(inp_mask, out_mask, ptct_pairs, [
+                    i for i, v in enumerate(final_key) if v is not None])
             kr = self.int_to_list(k[0])
             print(kr)
-            for i,v in enumerate(self.int_to_list(out_mask)):
+            for i, v in enumerate(self.int_to_list(out_mask)):
                 if v and final_key[i] is None:
                     final_key[i] = kr[i]
             print(final_key)
-            print(self.int_to_list(self.round_keys[-1]))
             print()
         return final_key
 
-    def find_last_roundkey(self, outmasks, cutoff=10000):
-        if self.mode == 'linear':
-            return self.find_last_roundkey_linear(outmasks, cutoff)
-        elif self.mode == 'differential':
-            return self.find_last_roundkey_differential(outmasks, cutoff)
+    def generate_encryption_pairs(self, outmasks, cutoff=10000):
+        max_threshold = max(100 * int(1 / (bias * bias)) for _, _, bias in outmasks)
+        threshold = min(cutoff, max_threshold)
+        all_pt = list(self.encryptions)[:threshold]
+        while len(all_pt) < threshold:
+            r = random.randint(0, 2**(self.NUM_SBOX * self.BOX_SIZE) - 1)
+            if r in self.encryptions:
+                continue
+            self.encryptions[r] = None
+            all_pt.append(r)
+        self.update_encryptions()
+        all_ptct = [(i, self.encryptions[i]) for i in all_pt]
+        return [all_ptct]*len(outmasks)
+
