@@ -195,7 +195,8 @@ class CharacteristicSolver:
         else:
             # cap to initialized struct
             num_rounds = min(self.num_rounds, num_rounds)
-        self.solver.pop()  # remove any previous include/exclude block constraints
+        while len(self.solver.objectives()):
+            self.solver.pop()  # remove any previous include/exclude block constraints
         self.solver.push()  # set this as the checkpoint
         # specify which blocks to definitely include in the characteristic
         for i in include_blocks:
@@ -249,18 +250,18 @@ class CharacteristicSolver:
                         )))
         return masks
 
-    def search_exclusive_masks(self, choose_best=1, display_paths=True, prune_level=-1):
+    def search_exclusive_masks(self, prune_level=-1, repeat=1):
         self.init_characteristic_solver(prune_level)
         masks = []
         for i in range(self.num_blocks):
             include_blocks = {i}
             exclude_blocks = set(range(self.num_blocks)) - include_blocks
-            masks.extend(self.solve_for_blocks(include_blocks, exclude_blocks))
+            masks.extend(self.solve_for_blocks(include_blocks, exclude_blocks, num_sols=repeat))
         return masks
 
     def get_masks(self, num_rounds, n=1, display_paths=True):
         masks = []
-        for m in islice(all_smt( self.solver, [self.bv_inp_masks[num_rounds - 1]]), n):
+        for m in islice(all_smt(self.solver, [self.bv_inp_masks[num_rounds - 1]]), n):
             inp_masks = [m.eval(i).as_long()
                          for i in self.bv_inp_masks[:num_rounds]]
             oup_masks = [m.eval(i).as_long()
@@ -435,9 +436,9 @@ class DifferentialCryptanalysis(Cryptanalysis):
             print(self.int_to_list(i), v)
         return topn[0]
 
-    def find_last_roundkey(self, outmasks, cutoff=10000):
+    def find_last_roundkey(self, outmasks, cutoff=10000, multiple=1000):
         final_key = [None] * self.NUM_SBOX
-        all_pt_ct_pairs = self.generate_encryption_pairs(outmasks, cutoff)
+        all_pt_ct_pairs = self.generate_encryption_pairs(outmasks, cutoff, multiple=multiple)
         for pt_ct_pairs, (inp_mask, out_mask, bias) in zip(all_pt_ct_pairs, outmasks):
             ct_pairs = [i[1] for i in pt_ct_pairs]
             # print("out mask",self.int_to_list(out_mask))
@@ -453,7 +454,7 @@ class DifferentialCryptanalysis(Cryptanalysis):
         return final_key
 
 
-    def generate_encryption_pairs(self, outmasks, cutoff=10000):
+    def generate_encryption_pairs(self, outmasks, cutoff=10000, multiple=1000):
         """
         get pt-ct pairs for a set of differentials such that number of
         encryptions is minimised
@@ -492,7 +493,7 @@ class DifferentialCryptanalysis(Cryptanalysis):
                 pt_pairs.append((r, r ^ inp_mask))
             all_pt_pairs.append(pt_pairs)
 
-        self.update_encryptions()
+        self.update_encryptions(multiple=multiple)
 
         all_pt_ct_pairs = []
         for pt_pairs in all_pt_pairs:
@@ -507,6 +508,33 @@ class DifferentialCryptanalysis(Cryptanalysis):
 class LinearCryptanalysis(Cryptanalysis):
     def __init__(self, sbox, pbox, num_rounds):
         super().__init__(sbox, pbox, num_rounds, 'linear')
+
+
+    def find_keybits_multimasks(self, in_out_masks, ptct_pairs, known_keyblocks=[]):
+        key_diffcounts = [Counter() for i in range(self.NUM_SBOX)]
+        for in_mask, out_mask, _ in tqdm(in_out_masks):
+            out_blocks = self.int_to_list(out_mask)
+            active_blocks = [i for i, v in enumerate(
+                out_blocks) if v and i not in known_keyblocks]
+            key_diffcount_curr = Counter()
+            for klst in product(range(len(self.SBOX)), repeat=len(active_blocks)):
+                key = [0] * self.NUM_SBOX
+                for i, v in zip(active_blocks, klst):
+                    key[i] = v
+                key = self.list_to_int(key)
+                for pt, ct in ptct_pairs:
+                    ct_last = self.dec_partial_last_noperm(ct, [key])
+                    key_diffcount_curr[key] += self.parity((pt & in_mask) ^ (ct_last & out_mask))
+            for i in key_diffcount_curr:
+                count = abs(key_diffcount_curr[i] - len(ptct_pairs) // 2)
+                key_list = self.int_to_list(i)
+                for j in active_blocks:
+                    key_diffcounts[j][key_list[j]] += count
+            topn = key_diffcounts[j].most_common(self.BOX_SIZE)
+            for i, v in topn:
+                print(i, v)
+        return key_diffcounts
+
 
     def find_keybits(self, in_mask, out_mask, ptct_pairs, known_keyblocks=[]):
         out_blocks = self.int_to_list(out_mask)
@@ -528,9 +556,9 @@ class LinearCryptanalysis(Cryptanalysis):
             print(self.int_to_list(i), v)
         return topn[0]
 
-    def find_last_roundkey(self, outmasks, cutoff=50000):
+    def find_last_roundkey(self, outmasks, cutoff=50000, multiple=1000):
         final_key = [None] * self.NUM_SBOX
-        all_pt_ct_pairs = self.generate_encryption_pairs(outmasks, cutoff)
+        all_pt_ct_pairs = self.generate_encryption_pairs(outmasks, cutoff, multiple=multiple)
         for ptct_pairs, (inp_mask, out_mask, bias) in zip(all_pt_ct_pairs, outmasks):
             k = self.find_keybits(inp_mask, out_mask, ptct_pairs, [
                     i for i, v in enumerate(final_key) if v is not None])
@@ -543,7 +571,7 @@ class LinearCryptanalysis(Cryptanalysis):
             print()
         return final_key
 
-    def generate_encryption_pairs(self, outmasks, cutoff=10000):
+    def generate_encryption_pairs(self, outmasks, cutoff=10000, multiple=1000):
         max_threshold = max(100 * int(1 / (bias * bias)) for _, _, bias in outmasks)
         threshold = min(cutoff, max_threshold)
         all_pt = list(self.encryptions)[:threshold]
@@ -553,7 +581,7 @@ class LinearCryptanalysis(Cryptanalysis):
                 continue
             self.encryptions[r] = None
             all_pt.append(r)
-        self.update_encryptions()
+        self.update_encryptions(multiple=multiple)
         all_ptct = [(i, self.encryptions[i]) for i in all_pt]
         return [all_ptct]*len(outmasks)
 
