@@ -31,8 +31,33 @@ def all_smt(s, initial_terms):
     yield from all_smt_rec(list(initial_terms))
 
 
-class CharacteristicSolver:
+class CharacteristicSearcher:
+    """A class for finding characteristics (linear or differential) of a substitution
+    permutation network with provided S-box and P-box with a given number of rounds.
+
+    Attributes:
+        sbox: A list representing the substitution box.
+        pbox: A list representing the permutation box.
+        num_rounds: An integer representing the number of rounds.
+        block_size: An integer representing the number of bits in the block.
+        box_size: An integer representing the size of the S-box in bits.
+        num_blocks: An integer representing the number of sboxes in a block
+        mode: A string representing the mode, which can be 'linear' or 'differential'.
+        bias: A Counter dictionary representing linear or differential bias
+              of sbox input/output pairs
+        solutions: A dictionary containing list of valid characteristic masks for a given
+            set of included and excluded blocks
+        solver: SMT solver (optimize) instance to search the characteristics
+    """
     def __init__(self, sbox, pbox, num_rounds, mode='linear'):
+        """Initializes the CharacteristicSolver with the given sbox, pbox, num_rounds and mode.
+
+        Args:
+            sbox (list): The substitution box.
+            pbox (list): The permutation box.
+            num_rounds (int): The number of rounds.
+            mode (str, optional): The mode of operation. Defaults to 'linear'.
+        """
         self.sbox = sbox
         self.pbox = pbox
         self.num_rounds = num_rounds
@@ -47,6 +72,13 @@ class CharacteristicSolver:
         self.solutions = defaultdict(list)
 
     def initialize_sbox_structure(self):
+        """Initializes the S-box structure for the cryptographic solver.
+
+        This method sets up the structure of the S-box by creating an optimized solver,
+        initializing input and output bit vectors for each round, and adding
+        constraints for the solver. It also creates a concatenated view of the input
+        and output layers for further processing.
+        """
         n = self.box_size
         self.solver = Optimize()
         self.inps = [[BitVec('r{}_i{}'.format(r, i), n)
@@ -90,6 +122,15 @@ class CharacteristicSolver:
                                  for i in range(self.num_rounds)]
 
     def bitvec_permutation(self, inp, oup):
+        """Performs bit vector permutation based on pbox.
+
+        Args:
+            inp (BitVec): The input bit vector.
+            oup (BitVec): The output bit vector.
+
+        Returns:
+            list: A list of constraints for the permutation.
+        """
         pn = len(self.pbox)
         constraints = []
         for i, v in enumerate(self.pbox):
@@ -100,6 +141,17 @@ class CharacteristicSolver:
         return constraints
 
     def initialize_objectives(self):
+        """Initializes the objective functions for the cryptographic solver.
+
+        The method sets up four types of objective functions: 'original_linear',
+        'reduced', 'differential', and 'linear'. These objective functions are
+        used to guide the solver in finding the optimal solution. Each objective
+        function is associated with a lambda function that calculates the objective
+        value for a given number of rounds.
+        'reduced' objective is called for both linear and differential search
+        Other objective functions are just there for reference and easy evaluation
+        of bias directly from the model
+        """
         self.objectives = {
             # the actual objective, which is just product of bias [0,1/2]
             'original_linear': lambda rounds: 2**(self.num_blocks * rounds - 1) * Product([self.sboxf(
@@ -131,7 +183,19 @@ class CharacteristicSolver:
         }
 
     def add_bias_constraints(self, prune_level):
+    """Adds bias constraints to the solver based on the biases of the S-box.
+
+    This method adds constraints to the solver that are based on the biases of the S-box.
+    If the bias of a particular input-output pair is greater than or equal to 2**prune_level,
+    the method adds a constraint that the S-box function of the pair is equal to the bias.
+    Otherwise, it adds a constraint that the S-box function of the pair is 0. This helps in
+    pruning the search space of the solver.
+
+    Args:
+        prune_level (int): The level at which to prune the biases.
+    """
         for i in range(2**self.box_size):
+        solutions: A dictionary representing the solutions.
             for j in range(2**self.box_size):
                 # just some pruning of very small biases
                 if self.bias[(i, j)] >= 2**(prune_level):
@@ -150,6 +214,17 @@ class CharacteristicSolver:
                 )
 
     def init_characteristic_solver(self, prune_level=-1):
+    """Initializes the S-box structure, S-box function, objective functions, and pruning level.
+
+    This method initializes the structure of the S-box, the S-box function,
+    and the objective functions for the solver. It also sets the pruning level
+    for the solver. If no pruning level is provided, the method will search for
+    the best pruning level.
+
+    Args:
+        prune_level (int, optional): The level at which to prune the biases.
+        If not provided or less than 0, the method will search for the best pruning level.
+    """
         self.initialize_sbox_structure()
         self.sboxf = Function(
             'sbox', BitVecSort(
@@ -190,6 +265,26 @@ class CharacteristicSolver:
             num_rounds=0,
             num_sols=1,
             display_paths=True):
+    """Solves the characteristic for the specified blocks and maximizes the objective function.
+
+        This method searches the characteristic for the specified blocks,
+        maximizes the objective function, and returns the solutions.
+        The blocks to include and exclude in the characteristic can be specified.
+        The number of rounds and the number of solutions can also be specified.
+
+        Args:
+            include_blocks (list, optional): The blocks to definitely include in the characteristic.
+            exclude_blocks (list, optional): The blocks to definitely exclude in the characteristic.
+            num_rounds (int, optional): The number of rounds for which to solve the characteristic.
+                                         If not provided or 0, the number of rounds will be set to the
+                                         number of rounds of the solver.
+            num_sols (int, optional): The number of solutions to return.
+            display_paths (bool, optional): Whether to display the paths of the solutions.
+
+        Returns:
+            list: A list of tuples. Each tuple contains the input masks, the output masks, and the
+                  calculated bias for a solution.
+        """
         if num_rounds == 0:
             num_rounds = self.num_rounds
         else:
@@ -215,6 +310,22 @@ class CharacteristicSolver:
                 for inp_masks, _, calc_bias, _ in solutions]
 
     def search_best_masks(self, tolerance=1, choose_best=10, display_paths=True):
+    """Searches for the best masks with the highest total bias and limited undiscovered active blocks.
+
+    This method searches for the best masks with the highest total bias and a limited number
+    of undiscovered active blocks.
+
+    Args:
+        tolerance (int, optional): The maximum number of undiscovered active blocks allowed.
+        choose_best (int, optional): The number of best masks to choose from.
+        display_paths (bool, optional): Whether to display the characteristic paths
+                                    (containing the bits involved) of the solutions.
+
+    Returns:
+        list: A list of tuples. Each tuple contains the input masks, the output masks, and the
+              total bias for a solution.
+    """
+
         prune_level = self.init_characteristic_solver()
         nr = self.num_rounds
         discovered = [False for _ in range(self.num_blocks)]
@@ -251,6 +362,19 @@ class CharacteristicSolver:
         return masks
 
     def search_exclusive_masks(self, prune_level=-1, repeat=1):
+    """Searches for the masks for each block by including only one block and excluding all the others.
+
+        This method searches for the masks for each block by including only one block and excluding
+        all the others.
+
+        Args:
+            prune_level (int, optional): The level at which to prune the biases.
+            repeat (int, optional): The number of times to repeat the search for each block.
+
+        Returns:
+            list: A list of tuples. Each tuple contains the input masks, the output masks, and the
+                  total bias for a solution.
+        """
         self.init_characteristic_solver(prune_level)
         masks = []
         for i in range(self.num_blocks):
@@ -260,6 +384,19 @@ class CharacteristicSolver:
         return masks
 
     def get_masks(self, num_rounds, n=1, display_paths=True):
+    """Returns the input masks, output masks, total bias, and active blocks of the solutions.
+
+        This method returns the input masks, output masks, total bias, and active blocks of the solutions.
+
+        Args:
+            num_rounds (int): The number of rounds for which to get the masks.
+            n (int, optional): The number of masks to get.
+            display_paths (bool, optional): Whether to display the paths of the solutions.
+
+        Returns:
+            list: A list of tuples. Each tuple contains the input masks, the output masks, the total bias,
+                  and the active blocks for a solution.
+        """
         masks = []
         for m in islice(all_smt(self.solver, [self.bv_inp_masks[num_rounds - 1]]), n):
             inp_masks = [m.eval(i).as_long()
@@ -302,13 +439,32 @@ class CharacteristicSolver:
 
 class Cryptanalysis(SPN, ABC):
     def __init__(self, sbox, pbox, num_rounds, mode='differential'):
+        """
+        This method initializes the Cryptanalysis class by calling the __init__ method of the SPN class
+        (the parent class) and setting the mode and characteristic_searcher attributes. It also initializes
+        the encryptions dictionary.
+
+        Args:
+            sbox (list): A list of integers representing the S-box.
+            pbox (list): A list of integers representing the P-box.
+            num_rounds (int): The number of rounds in the block cipher.
+            mode (str, optional): The mode of the cryptanalysis. Defaults to 'differential'.
+        """
         super().__init__(sbox, pbox, 0, num_rounds)
         self.mode = mode
-        self.characteristic_searcher = CharacteristicSolver(
+        self.characteristic_searcher = CharacteristicSearcher(
             self.SBOX, self.PBOX, num_rounds - 1, mode)
         self.encryptions = {}  # store of the encryptions utilized by the cryptanalysis
 
     def dec_partial_last_noperm(self, ct, round_keys):
+        """Performs partial decryption without permutation on the last round.
+        Args:
+            ct (int): The ciphertext to decrypt.
+            round_keys (list): A list of round keys in reverse order.
+
+        Returns:
+            int: The partially decrypted ciphertext.
+        """
         # partial decryption
         # round keys in reverse order
         ct = ct ^ round_keys[0]
@@ -322,6 +478,14 @@ class Cryptanalysis(SPN, ABC):
         return ct
 
     def dec_partial_last_withperm(self, ct, round_keys):
+        """Performs partial decryption with permutation on last round
+        Args:
+            ct (int): The ciphertext to decrypt.
+            round_keys (list): A list of round keys.
+
+        Returns:
+            int: The partially decrypted ciphertext.
+        """
         for round_key in round_keys[:self.rounds]:
             ct ^= round_key
             ct = self.inv_perm(ct)
@@ -332,27 +496,39 @@ class Cryptanalysis(SPN, ABC):
 
     @staticmethod
     def parity(x):
-        """
-        Calculate the parity of an integer x.
+        """Calculates the parity of an integer.
 
-        :param x: Integer, input value for which parity is calculated.
-        :return: Integer, 0 if the number of set bits in x is even, 1 otherwise.
+        This static method calculates the parity of an integer by counting the number
+        of set bits in the binary representation of the integer. It returns 0 if the
+        number of set bits is even, and 1 otherwise.
+
+        Args:
+            x (int): The input value for which the parity is calculated.
+
+        Returns:
+            int: 0 if the number of set bits is even, 1 otherwise.
         """
         res = 0
         while x:
             res ^= 1
-            x = x & (x - 1)
+            x &= (x - 1)
         return res
 
     @staticmethod
     def calculate_linear_bias(sbox, no_sign=True, fraction=False):
-        """
-        Calculate the linear bias of an S-box.
+        """Calculates the linear bias of an S-box.
 
-        :param sbox: List of integers, representing the S-box.
-        :param no_sign: Optional, boolean, if True, the absolute value of the bias is returned (default: True).
-        :param fraction: Optional, boolean, if True, the bias is returned as a fraction (default: False).
-        :return: Counter dictionary, containing the linear biases for each input and output mask pair.
+        This static method calculates the linear bias of an S-box. It iterates over
+        all possible input and output mask pairs and computes the linear bias using
+        the Cryptanalysis.parity method.
+
+        Args:
+            sbox (list): A list of integers representing the S-box.
+            no_sign (bool, optional): If True, the absolute value of the bias is returned. Defaults to True.
+            fraction (bool, optional): If True, the bias is returned as a fraction. Defaults to False.
+
+        Returns:
+            Counter: A Counter dictionary containing the linear biases for each input and output mask pair.
         """
         n = len(sbox)
         bias = Counter({(i, j): -(n // 2) for i in range(n) for j in range(n)})
@@ -370,12 +546,17 @@ class Cryptanalysis(SPN, ABC):
 
     @staticmethod
     def calculate_difference_table(sbox):
-        """
-        Calculate the difference table for an S-box.
+        """Calculates the difference table for an S-box.
 
-        :param sbox: List of integers, representing the S-box.
-        :return: Counter dictionary, containing the count of output
-                differences for each input difference.
+        This static method calculates the difference table for an S-box. It iterates
+        over all possible input and input difference pairs and counts the number of
+        output differences for each input difference.
+
+        Args:
+            sbox (list): A list of integers representing the S-box.
+
+        Returns:
+            Counter: A Counter dictionary containing the count of output differences for each input difference.
         """
         n = len(sbox)
         bias = Counter()
@@ -386,6 +567,15 @@ class Cryptanalysis(SPN, ABC):
         return bias
 
     def update_encryptions(self, multiple=10000):
+        """Updates the encryptions dictionary.
+
+        This method updates the encryptions dictionary by encrypting the ciphertexts
+        that have not been encrypted yet. It encrypts the ciphertexts in batches to
+        improve performance.
+
+        Args:
+            multiple (int, optional): The number of ciphertexts to encrypt in each batch. Defaults to 10000.
+        """
         to_encrypt = [i for i, v in self.encryptions.items() if v is None]
         for i in range(0, len(to_encrypt) + multiple, multiple):
             current_batch = to_encrypt[i:i + multiple]
@@ -395,21 +585,72 @@ class Cryptanalysis(SPN, ABC):
                 self.encryptions[j] = e
 
     def batch_encrypt(self, pt_list):
-        """
-        takes a list of integers, returns a list of integers
+        """Encrypts a list of plaintexts.
+
+        This method takes a list of integers representing plaintexts and returns a
+        list of integers representing the corresponding ciphertexts.
+        Override this function in case oracle is remote and to get encryptions from it.
+
+        Args:
+            pt_list (list): A list of integers representing the plaintexts.
+
+        Returns:
+            list: A list of integers representing the ciphertexts.
         """
         return [self.encrypt(i) for i in pt_list]
 
     @abstractmethod
     def find_keybits(self, in_mask, out_mask, encryption_pairs, known_keyblocks=[]):
+        """Finds the key bits based on input and output masks.
+
+        This abstract method is meant to be overridden by subclasses. It takes an input mask,
+        an output mask, a list of encryption pairs, and an optional list of known key blocks
+        as input. It should implement the logic to find the key bits based on the provided parameters.
+
+        Args:
+            in_mask (int): The input mask for the key search.
+            out_mask (int): The output mask for the key search.
+            encryption_pairs (list): A list of tuples of encryption pairs used for analysis.
+            known_keyblocks (list, optional): A list of known key blocks. Defaults to an empty list.
+
+        Returns:
+            list: A list of key bits that are determined based on the provided parameters.
+        """
         pass
 
     @abstractmethod
     def generate_encryption_pairs(self, outmasks):
+        """Generates encryption pairs for analysis.
+
+        This abstract method is meant to be overridden by subclasses. It takes a list of output masks
+        and generates encryption pairs for analysis. The encryption pairs should be suitable for
+        cryptanalysis purposes.
+
+        Args:
+            outmasks (list): A list of tuples of (input_mask, output_mask, bias)
+            for which encryption pairs need to be generated.
+
+        Returns:
+            list: A list of encryption pairs suitable for cryptanalysis.
+        """
         pass
 
     @abstractmethod
     def find_last_roundkey(self, outmasks, cutoff):
+        """Finds the last round key based on output masks.
+
+        This abstract method is meant to be overridden by subclasses. It takes a list of output masks
+        and a cutoff value. It should implement the logic to find the last round key based on the output
+        masks and the specified cutoff value.
+
+        Args:
+            outmasks (list): A list of output masks for which the last round key needs to be found.
+            cutoff (int): The cutoff value used for determining the number of encryptions used to
+                            determine the last round key
+
+        Returns:
+            int: The last round key determined based on the output masks and the cutoff value.
+        """
         pass
 
 class DifferentialCryptanalysis(Cryptanalysis):
@@ -417,6 +658,20 @@ class DifferentialCryptanalysis(Cryptanalysis):
         super().__init__(sbox, pbox, num_rounds, 'differential')
 
     def find_keybits(self, out_mask, ct_pairs, known_keyblocks=[]):
+        """Finds the key bits based on the output mask and ciphertext pairs.
+
+        This method overrides the abstract `find_keybits` method in the `Cryptanalysis` class.
+        It takes an output mask, a list of ciphertext pairs, and an optional list of known key blocks as input.
+        It implements the logic to find the key bits based on the provided parameters.
+
+        Args:
+            out_mask (int): The output mask for the difference in encrypted pairs.
+            ct_pairs (list): A list of ciphertext pairs used for analysis.
+            known_keyblocks (list, optional): A list of known key blocks. Defaults to an empty list.
+
+        Returns:
+            int: A value representing the most likely key bits
+        """
         out_blocks = self.int_to_list(out_mask)
         active_blocks = [i for i, v in enumerate(out_blocks) if v and i not in known_keyblocks]
         key_diffcounts = Counter()
@@ -437,6 +692,22 @@ class DifferentialCryptanalysis(Cryptanalysis):
         return topn[0]
 
     def find_last_roundkey(self, outmasks, cutoff=10000, multiple=1000):
+        """Finds the last round key based on output masks.
+
+        This method overrides the abstract `find_last_roundkey` method in the `Cryptanalysis` class.
+        It takes a list of output masks, a cutoff value, and a multiple value as input.
+        It implements the logic to find the last round key based on the output masks and the specified parameters.
+
+        Args:
+            outmasks (list): A list of output masks for which the last round key needs to be found.
+            cutoff (int, optional): The cutoff value used for the maximum number of encryptions
+                                    called from oracle in determining the last round key. Defaults to 10000.
+            multiple (int, optional): The multiple indicating the size of the batch of values to be
+                                encrypted at once used for generating encryption pairs. Defaults to 1000.
+
+        Returns:
+            list: The last round key determined based on the output masks.
+        """
         final_key = [None] * self.NUM_SBOX
         all_pt_ct_pairs = self.generate_encryption_pairs(outmasks, cutoff, multiple=multiple)
         for pt_ct_pairs, (inp_mask, out_mask, bias) in zip(all_pt_ct_pairs, outmasks):
@@ -455,9 +726,21 @@ class DifferentialCryptanalysis(Cryptanalysis):
 
 
     def generate_encryption_pairs(self, outmasks, cutoff=10000, multiple=1000):
-        """
-        get pt-ct pairs for a set of differentials such that number of
-        encryptions is minimised
+        """Generates encryption pairs for a set of output masks.
+
+        This method overrides the abstract `generate_encryption_pairs` method in the `Cryptanalysis` class.
+        It takes a list of output masks, a cutoff value, and a multiple value as input.
+        It generates plaintext-ciphertext pairs for each output mask based on the specified parameters.
+
+        Args:
+            outmasks (list): A list of tuples of (input_diff_mask, output_diff_mask and bias)
+                            for which encryption pairs need to be generated.
+            cutoff (int, optional): The cutoff value of the max number of encryptions invoked. Defaults to 10000.
+            multiple (int, optional): The multiple indicating the size of the batch of values to be
+                                encrypted at once used for generating encryption pairs. Defaults to 1000.
+
+        Returns:
+            list: A list of plaintext-ciphertext pairs for each output mask.
         """
         all_pt_pairs = []
         for inp_mask, out_mask, bias in outmasks:
@@ -511,6 +794,20 @@ class LinearCryptanalysis(Cryptanalysis):
 
 
     def find_keybits_multimasks(self, in_out_masks, ptct_pairs, known_keyblocks=[]):
+        """Finds the key bits based on multiple input-output masks and plaintext-ciphertext pairs.
+
+        This method takes a list of input-output masks, a list of plaintext-ciphertext pairs,
+        and an optional list of known key blocks as input.
+        It implements the logic to find the key bits based on the provided parameters.
+
+        Args:
+            in_out_masks (list): A list of input-output masks for key search.
+            ptct_pairs (list): A list of plaintext-ciphertext pairs used for analysis.
+            known_keyblocks (list, optional): A list of known key blocks. Defaults to an empty list.
+
+        Returns:
+            list: A list of Counter objects containing the key bit differences for each active block.
+        """
         key_diffcounts = [Counter() for i in range(self.NUM_SBOX)]
         for in_mask, out_mask, _ in tqdm(in_out_masks):
             out_blocks = self.int_to_list(out_mask)
@@ -537,6 +834,21 @@ class LinearCryptanalysis(Cryptanalysis):
 
 
     def find_keybits(self, in_mask, out_mask, ptct_pairs, known_keyblocks=[]):
+    """Finds the key bits based on an input mask, an output mask, and plaintext-ciphertext pairs.
+
+    This method takes an input mask, an output mask, a list of plaintext-ciphertext pairs, and an optional list of known key blocks as input.
+    It implements the logic to find the key bits based on the provided parameters.
+
+    Args:
+        in_mask (int): The input mask for the key search.
+        out_mask (int): The output mask for the key search.
+        ptct_pairs (list): A list of plaintext-ciphertext pairs used for analysis.
+        known_keyblocks (list, optional): A list of known key blocks. Defaults to an empty list.
+
+    Returns:
+        tuple: A tuple containing the found key bits and their count.
+    """
+
         out_blocks = self.int_to_list(out_mask)
         active_blocks = [i for i, v in enumerate(
             out_blocks) if v and i not in known_keyblocks]
@@ -557,6 +869,19 @@ class LinearCryptanalysis(Cryptanalysis):
         return topn[0]
 
     def find_last_roundkey(self, outmasks, cutoff=50000, multiple=1000):
+    """Finds the last round key based on output masks.
+
+    This method takes a list of output masks, a cutoff value, and a multiple value as input.
+    It implements the logic to find the last round key based on the output masks and the specified parameters.
+
+    Args:
+        outmasks (list): A list of output masks for which the last round key needs to be found.
+        cutoff (int, optional): The cutoff value used for determining the last round key. Defaults to 50000.
+        multiple (int, optional): The multiple value used for generating encryption pairs. Defaults to 1000.
+
+    Returns:
+        list: The last round key determined based on the output masks.
+    """
         final_key = [None] * self.NUM_SBOX
         all_pt_ct_pairs = self.generate_encryption_pairs(outmasks, cutoff, multiple=multiple)
         for ptct_pairs, (inp_mask, out_mask, bias) in zip(all_pt_ct_pairs, outmasks):
@@ -572,6 +897,19 @@ class LinearCryptanalysis(Cryptanalysis):
         return final_key
 
     def generate_encryption_pairs(self, outmasks, cutoff=10000, multiple=1000):
+    """Generates encryption pairs for a set of output masks.
+
+    This method takes a list of output masks, a cutoff value, and a multiple value as input.
+    It generates plaintext-ciphertext pairs for each output mask based on the specified parameters.
+
+    Args:
+        outmasks (list): A list of output masks for which encryption pairs need to be generated.
+        cutoff (int, optional): The cutoff value used for determining the number of encryptions. Defaults to 10000.
+        multiple (int, optional): The multiple value used for generating encryption pairs. Defaults to 1000.
+
+    Returns:
+        list: A list of plaintext-ciphertext pairs for each output mask.
+    """
         max_threshold = max(100 * int(1 / (bias * bias)) for _, _, bias in outmasks)
         threshold = min(cutoff, max_threshold)
         all_pt = list(self.encryptions)[:threshold]
