@@ -183,19 +183,18 @@ class CharacteristicSearcher:
         }
 
     def add_bias_constraints(self, prune_level):
-    """Adds bias constraints to the solver based on the biases of the S-box.
+        """Adds bias constraints to the solver based on the biases of the S-box.
 
-    This method adds constraints to the solver that are based on the biases of the S-box.
-    If the bias of a particular input-output pair is greater than or equal to 2**prune_level,
-    the method adds a constraint that the S-box function of the pair is equal to the bias.
-    Otherwise, it adds a constraint that the S-box function of the pair is 0. This helps in
-    pruning the search space of the solver.
+        This method adds constraints to the solver that are based on the biases of the S-box.
+        If the bias of a particular input-output pair is greater than or equal to 2**prune_level,
+        the method adds a constraint that the S-box function of the pair is equal to the bias.
+        Otherwise, it adds a constraint that the S-box function of the pair is 0. This helps in
+        pruning the search space of the solver.
 
-    Args:
-        prune_level (int): The level at which to prune the biases.
-    """
+        Args:
+            prune_level (int): The level at which to prune the biases.
+        """
         for i in range(2**self.box_size):
-        solutions: A dictionary representing the solutions.
             for j in range(2**self.box_size):
                 # just some pruning of very small biases
                 if self.bias[(i, j)] >= 2**(prune_level):
@@ -214,17 +213,17 @@ class CharacteristicSearcher:
                 )
 
     def init_characteristic_solver(self, prune_level=-1):
-    """Initializes the S-box structure, S-box function, objective functions, and pruning level.
+        """Initializes the S-box structure, S-box function, objective functions, and pruning level.
 
-    This method initializes the structure of the S-box, the S-box function,
-    and the objective functions for the solver. It also sets the pruning level
-    for the solver. If no pruning level is provided, the method will search for
-    the best pruning level.
+        This method initializes the structure of the S-box, the S-box function,
+        and the objective functions for the solver. It also sets the pruning level
+        for the solver. If no pruning level is provided, the method will search for
+        the best pruning level.
 
-    Args:
-        prune_level (int, optional): The level at which to prune the biases.
-        If not provided or less than 0, the method will search for the best pruning level.
-    """
+        Args:
+            prune_level (int, optional): The level at which to prune the biases.
+            If not provided or less than 0, the method will search for the best pruning level.
+        """
         self.initialize_sbox_structure()
         self.sboxf = Function(
             'sbox', BitVecSort(
@@ -265,26 +264,26 @@ class CharacteristicSearcher:
             num_rounds=0,
             num_sols=1,
             display_paths=True):
-    """Solves the characteristic for the specified blocks and maximizes the objective function.
+        """Solves the characteristic for the specified blocks and maximizes the objective function.
 
-        This method searches the characteristic for the specified blocks,
-        maximizes the objective function, and returns the solutions.
-        The blocks to include and exclude in the characteristic can be specified.
-        The number of rounds and the number of solutions can also be specified.
+            This method searches the characteristic for the specified blocks,
+            maximizes the objective function, and returns the solutions.
+            The blocks to include and exclude in the characteristic can be specified.
+            The number of rounds and the number of solutions can also be specified.
 
-        Args:
-            include_blocks (list, optional): The blocks to definitely include in the characteristic.
-            exclude_blocks (list, optional): The blocks to definitely exclude in the characteristic.
-            num_rounds (int, optional): The number of rounds for which to solve the characteristic.
-                                         If not provided or 0, the number of rounds will be set to the
-                                         number of rounds of the solver.
-            num_sols (int, optional): The number of solutions to return.
-            display_paths (bool, optional): Whether to display the paths of the solutions.
+            Args:
+                include_blocks (list, optional): The blocks to definitely include in the characteristic.
+                exclude_blocks (list, optional): The blocks to definitely exclude in the characteristic.
+                num_rounds (int, optional): The number of rounds for which to solve the characteristic.
+                                             If not provided or 0, the number of rounds will be set to the
+                                             number of rounds of the solver.
+                num_sols (int, optional): The number of solutions to return.
+                display_paths (bool, optional): Whether to display the paths of the solutions.
 
-        Returns:
-            list: A list of tuples. Each tuple contains the input masks, the output masks, and the
-                  calculated bias for a solution.
-        """
+            Returns:
+                list: A list of tuples. Each tuple contains the input masks, the output masks, and the
+                      calculated bias for a solution.
+            """
         if num_rounds == 0:
             num_rounds = self.num_rounds
         else:
@@ -310,21 +309,21 @@ class CharacteristicSearcher:
                 for inp_masks, _, calc_bias, _ in solutions]
 
     def search_best_masks(self, tolerance=1, choose_best=10, display_paths=True):
-    """Searches for the best masks with the highest total bias and limited undiscovered active blocks.
+        """Searches for the best masks with the highest total bias and limited undiscovered active blocks.
 
-    This method searches for the best masks with the highest total bias and a limited number
-    of undiscovered active blocks.
+        This method searches for the best masks with the highest total bias and a limited number
+        of undiscovered active blocks.
 
-    Args:
-        tolerance (int, optional): The maximum number of undiscovered active blocks allowed.
-        choose_best (int, optional): The number of best masks to choose from.
-        display_paths (bool, optional): Whether to display the characteristic paths
-                                    (containing the bits involved) of the solutions.
+        Args:
+            tolerance (int, optional): The maximum number of undiscovered active blocks allowed.
+            choose_best (int, optional): The number of best masks to choose from.
+            display_paths (bool, optional): Whether to display the characteristic paths
+                                        (containing the bits involved) of the solutions.
 
-    Returns:
-        list: A list of tuples. Each tuple contains the input masks, the output masks, and the
-              total bias for a solution.
-    """
+        Returns:
+            list: A list of tuples. Each tuple contains the input masks, the output masks, and the
+                  total bias for a solution.
+        """
 
         prune_level = self.init_characteristic_solver()
         nr = self.num_rounds
@@ -362,7 +361,7 @@ class CharacteristicSearcher:
         return masks
 
     def search_exclusive_masks(self, prune_level=-1, repeat=1):
-    """Searches for the masks for each block by including only one block and excluding all the others.
+        """Searches for the masks for each block by including only one block and excluding all the others.
 
         This method searches for the masks for each block by including only one block and excluding
         all the others.
@@ -384,7 +383,7 @@ class CharacteristicSearcher:
         return masks
 
     def get_masks(self, num_rounds, n=1, display_paths=True):
-    """Returns the input masks, output masks, total bias, and active blocks of the solutions.
+        """Returns the input masks, output masks, total bias, and active blocks of the solutions.
 
         This method returns the input masks, output masks, total bias, and active blocks of the solutions.
 
@@ -644,7 +643,8 @@ class Cryptanalysis(SPN, ABC):
         masks and the specified cutoff value.
 
         Args:
-            outmasks (list): A list of output masks for which the last round key needs to be found.
+            outmasks (list): A list of tuples of (input, output masks, bias) for which
+                                the last round key needs to be found.
             cutoff (int): The cutoff value used for determining the number of encryptions used to
                             determine the last round key
 
@@ -699,7 +699,8 @@ class DifferentialCryptanalysis(Cryptanalysis):
         It implements the logic to find the last round key based on the output masks and the specified parameters.
 
         Args:
-            outmasks (list): A list of output masks for which the last round key needs to be found.
+            outmasks (list): A list of tuples of (input, output masks, bias) for which
+                                the last round key needs to be found.
             cutoff (int, optional): The cutoff value used for the maximum number of encryptions
                                     called from oracle in determining the last round key. Defaults to 10000.
             multiple (int, optional): The multiple indicating the size of the batch of values to be
@@ -834,20 +835,21 @@ class LinearCryptanalysis(Cryptanalysis):
 
 
     def find_keybits(self, in_mask, out_mask, ptct_pairs, known_keyblocks=[]):
-    """Finds the key bits based on an input mask, an output mask, and plaintext-ciphertext pairs.
+        """Finds the key bits based on an input mask, an output mask, and plaintext-ciphertext pairs.
 
-    This method takes an input mask, an output mask, a list of plaintext-ciphertext pairs, and an optional list of known key blocks as input.
-    It implements the logic to find the key bits based on the provided parameters.
+        This method takes an input mask, an output mask, a list of plaintext-ciphertext
+        pairs, and an optional list of known key blocks as input.
+        It implements the logic to find the key bits based on the provided parameters.
 
-    Args:
-        in_mask (int): The input mask for the key search.
-        out_mask (int): The output mask for the key search.
-        ptct_pairs (list): A list of plaintext-ciphertext pairs used for analysis.
-        known_keyblocks (list, optional): A list of known key blocks. Defaults to an empty list.
+        Args:
+            in_mask (int): The input mask for the key search.
+            out_mask (int): The output mask for the key search.
+            ptct_pairs (list): A list of tuples of plaintext-ciphertext pairs used for analysis.
+            known_keyblocks (list, optional): A list of known key blocks. Defaults to an empty list.
 
-    Returns:
-        tuple: A tuple containing the found key bits and their count.
-    """
+        Returns:
+            int: A integer representing the most probable keybits
+        """
 
         out_blocks = self.int_to_list(out_mask)
         active_blocks = [i for i, v in enumerate(
@@ -869,19 +871,24 @@ class LinearCryptanalysis(Cryptanalysis):
         return topn[0]
 
     def find_last_roundkey(self, outmasks, cutoff=50000, multiple=1000):
-    """Finds the last round key based on output masks.
+        """Finds the last round key based on output masks.
 
-    This method takes a list of output masks, a cutoff value, and a multiple value as input.
-    It implements the logic to find the last round key based on the output masks and the specified parameters.
+        This method overrides the abstract `find_last_roundkey` method in the `Cryptanalysis` class.
+        It takes a list of output masks, a cutoff value, and a multiple value as input.
+        It implements the logic to find the last round key based on the output
+        masks and the specified parameters.
 
-    Args:
-        outmasks (list): A list of output masks for which the last round key needs to be found.
-        cutoff (int, optional): The cutoff value used for determining the last round key. Defaults to 50000.
-        multiple (int, optional): The multiple value used for generating encryption pairs. Defaults to 1000.
+        Args:
+            outmasks (list): A list of tuples of (input, output masks, bias) for which
+                                the last round key needs to be found.
+            cutoff (int, optional): The cutoff value used for the maximum number of encryptions
+                                    called from oracle in determining the last round key. Defaults to 10000.
+            multiple (int, optional): The multiple indicating the size of the batch of values to be
+                                encrypted at once used for generating encryption pairs. Defaults to 1000.
 
-    Returns:
-        list: The last round key determined based on the output masks.
-    """
+        Returns:
+            list: The last round key determined based on the output masks.
+        """
         final_key = [None] * self.NUM_SBOX
         all_pt_ct_pairs = self.generate_encryption_pairs(outmasks, cutoff, multiple=multiple)
         for ptct_pairs, (inp_mask, out_mask, bias) in zip(all_pt_ct_pairs, outmasks):
@@ -897,19 +904,21 @@ class LinearCryptanalysis(Cryptanalysis):
         return final_key
 
     def generate_encryption_pairs(self, outmasks, cutoff=10000, multiple=1000):
-    """Generates encryption pairs for a set of output masks.
+        """Generates encryption pairs for a set of output masks.
 
-    This method takes a list of output masks, a cutoff value, and a multiple value as input.
-    It generates plaintext-ciphertext pairs for each output mask based on the specified parameters.
+        This method takes a list of output masks, a cutoff value, and a multiple value as input.
+        It generates plaintext-ciphertext pairs for each output mask based on the specified parameters.
 
-    Args:
-        outmasks (list): A list of output masks for which encryption pairs need to be generated.
-        cutoff (int, optional): The cutoff value used for determining the number of encryptions. Defaults to 10000.
-        multiple (int, optional): The multiple value used for generating encryption pairs. Defaults to 1000.
-
-    Returns:
-        list: A list of plaintext-ciphertext pairs for each output mask.
-    """
+        Args:
+            outmasks (list): A list of tuples of (input, output masks, bias) for which
+                                the last round key needs to be found.
+            cutoff (int, optional): The cutoff value used for the maximum number of encryptions
+                                    called from oracle in determining the last round key. Defaults to 10000.
+            multiple (int, optional): The multiple indicating the size of the batch of values to be
+                                encrypted at once used for generating encryption pairs. Defaults to 1000.
+        Returns:
+            list: A list of plaintext-ciphertext pairs for each output mask.
+        """
         max_threshold = max(100 * int(1 / (bias * bias)) for _, _, bias in outmasks)
         threshold = min(cutoff, max_threshold)
         all_pt = list(self.encryptions)[:threshold]
