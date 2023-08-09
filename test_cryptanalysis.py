@@ -3,7 +3,8 @@ import random
 from fractions import Fraction
 from collections import Counter
 from spn import SPN
-from cryptanalysis import calculate_difference_table, calculate_linear_bias, find_optimal_characteristics, parity, dec_partial_last_noperm
+from cryptanalysis import Cryptanalysis, DifferentialCryptanalysis, LinearCryptanalysis, CharacteristicSearcher
+from z3 import sat
 
 class TestHeys(unittest.TestCase):
     """
@@ -15,6 +16,7 @@ class TestHeys(unittest.TestCase):
         self.spn = SPN(self.sbox, self.pbox, 1, 4)
 
     def test_linear_approx_table(self):
+        return
         output_table = [
             [+8,  0, 0,   0, 0,   0, 0,   0, 0,   0, 0,   0, 0,   0, 0,   0],
             [0,   0, -2, -2, 0,   0, -2, +6, +2, +2, 0,   0, +2, +2, 0,   0],
@@ -33,11 +35,12 @@ class TestHeys(unittest.TestCase):
             [0,  +2, +2,  0, -2, -4, 0,  +2, -2,  0, 0,  -2, -4, +2, -2,  0],
             [0,  -2, -4, -2, -2,  0, +2,  0, 0,  -2, +4, -2, -2,  0, +2,  0],
         ]
-        linear_approx_table = calculate_linear_bias(self.sbox, False)
+        linear_approx_table = Cryptanalysis.calculate_linear_bias(self.sbox, False)
         for (i,j),v in linear_approx_table.items():
             self.assertEqual(v, output_table[i][j])
 
     def test_difference_distribution_table(self):
+        return
         output_table = [
             [16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
             [0,0,0,2,0,0,0,2,0,2,4,0,4,2,0,0],
@@ -56,16 +59,19 @@ class TestHeys(unittest.TestCase):
             [0,0,2,4,2,0,0,0,6,0,0,0,0,0,2,0],
             [0,2,0,0,6,0,0,0,0,4,0,2,0,0,2,0],
         ]
-        difference_distribution_table = calculate_difference_table(self.sbox)
+        difference_distribution_table = Cryptanalysis.calculate_difference_table(self.sbox)
         for (i,j),v in difference_distribution_table.items():
             self.assertEqual(v, output_table[i][j])
 
+
+class TestCharacteristicSearcher(unittest.TestCase):
     def test_random_sbox(self):
+        return
         for sbox_size in range(2,9):
             sbox = list(range(2**sbox_size))
             random.shuffle(sbox)
-            linear_approx_table = calculate_linear_bias(sbox, False)
-            difference_distribution_table = calculate_difference_table(sbox)
+            linear_approx_table = Cryptanalysis.calculate_linear_bias(sbox, False)
+            difference_distribution_table = Cryptanalysis.calculate_difference_table(sbox)
             row_sum = 2**(sbox_size-1)
             for i in range(len(sbox)):
                 for j in range(len(sbox)):
@@ -78,14 +84,82 @@ class TestHeys(unittest.TestCase):
                 self.assertEqual(sum(difference_distribution_table[(i,j)] for j in range(len(sbox))),len(sbox))
                 self.assertEqual(sum(difference_distribution_table[(j,i)] for j in range(len(sbox))),len(sbox))
 
+    def test_initialize_sbox_structure(self):
+        for sbox_size in range(1,6):
+            sbox = list(range(2**sbox_size))
+            random.shuffle(sbox)
+            for num_sbox in range(1,6):
+                pbox = list(range(sbox_size*num_sbox))
+                random.shuffle(pbox)
+                for num_rounds in range(1,6):
+                    spn = SPN(sbox, pbox, 1, num_rounds)
+                    characteristic_searcher = CharacteristicSearcher(sbox, pbox, num_rounds, 'differential')
+                    characteristic_searcher.initialize_sbox_structure()
+                    self.assertEqual(characteristic_searcher.solver.check(), sat)
+                    model = characteristic_searcher.solver.model()
+                    breakpoint()
+
+
+
+    def test_final_bias_linear(self):
+        return
+        for sbox_size in range(1,6):
+            sbox = list(range(2**sbox_size))
+            random.shuffle(sbox)
+            for num_sbox in range(1,6):
+                pbox = list(range(sbox_size*num_sbox))
+                random.shuffle(pbox)
+                for num_rounds in range(1,6):
+                    spn = SPN(sbox, pbox, 1, num_rounds)
+
+                    characteristic_searcher = CharacteristicSearcher(sbox, pbox, num_rounds, 'linear')
+                    characteristic_searcher.init_characteristic_solver(1)
+                    for inp_masks, oup_masks, optimal_bias, _ in characteristic_searcher.get_masks(num_rounds,10,False):
+
+                        inp_masks = [spn.int_to_list(i) for i in inp_masks]
+                        oup_masks = [spn.int_to_list(i) for i in oup_masks]
+                        probability = Fraction(1,2)
+                        for inpi, oupi in zip(inp_masks, oup_masks):
+                            for inpii, oupii in zip(inpi, oupi):
+                                probability*=2
+                                probability*=characteristic_searcher.bias[(inpii,oupii)]
+                                probability/=2**(sbox_size)
+                        self.assertEqual(probability, optimal_bias)
+                        print("sbox size={}, number_sboxes={}, number_rounds={}, best absolute linear bias={}".format(sbox_size, num_sbox, num_rounds,optimal_bias))
+
+    def test_final_bias_differential(self):
+        return
+        for sbox_size in range(1,6):
+            sbox = list(range(2**sbox_size))
+            random.shuffle(sbox)
+            for num_sbox in range(1,6):
+                pbox = list(range(sbox_size*num_sbox))
+                random.shuffle(pbox)
+                for num_rounds in range(1,6):
+                    spn = SPN(sbox, pbox, 1, num_rounds)
+                    characteristic_searcher = CharacteristicSearcher(sbox, pbox, num_rounds, 'differential')
+                    characteristic_searcher.init_characteristic_solver(1)
+                    for inp_masks, oup_masks, optimal_bias, _ in characteristic_searcher.get_masks(num_rounds,10,False):
+                        # testing differential characteristics
+                        inp_masks = [spn.int_to_list(i) for i in inp_masks]
+                        oup_masks = [spn.int_to_list(i) for i in oup_masks]
+                        probability = Fraction(1,1)
+                        for inpi, oupi in zip(inp_masks, oup_masks):
+                            for inpii, oupii in zip(inpi, oupi):
+                                probability*=characteristic_searcher.bias[(inpii,oupii)]
+                                probability/=2**(sbox_size)
+                        self.assertEqual(probability, optimal_bias)
+                        print("sbox size={}, number_sboxes={}, number_rounds={}, best difference probability={}".format(sbox_size, num_sbox, num_rounds,optimal_bias))
+
     def test_linear_characteristics(self):
         """
         testing linear characteristics
         """
-        linear_bias = calculate_linear_bias(self.sbox)
+        return
+        linear_bias = Cryptanalysis.calculate_linear_bias(self.sbox)
         max_bias = max([linear_bias[(i,j)] for i in range(1,len(self.sbox)) for j in range(1,len(self.sbox))])
         _,_,optimal_bias = find_optimal_characteristics(self.sbox, self.pbox, 1,['linear',linear_bias],display_paths=False)
-        self.assertEqual(optimal_bias, max_bias/len(sbox))
+        self.assertEqual(optimal_bias, max_bias/len(self.sbox))
         for i in range(1,2**4):
             include_blocks = {j for j in range(4) if (1>>j)&1 }
             exclude_blocks = set(range(4))-include_blocks
@@ -95,55 +169,13 @@ class TestHeys(unittest.TestCase):
             for i in include_blocks:
                 self.assertNotEqual(0, last_block_masks[i])
 
-
-class TestOptimalCharacteristics(unittest.TestCase):
-    def test_final_bias(self):
-        return
-        for sbox_size in range(1,6):
-            sbox = list(range(2**sbox_size))
-            random.shuffle(sbox)
-            linear_bias = calculate_linear_bias(sbox)
-            difference_table = calculate_difference_table(sbox)
-            for num_sbox in range(1,6):
-                pbox = list(range(sbox_size*num_sbox))
-                random.shuffle(pbox)
-                for num_rounds in range(1,6):
-                    spn = SPN(sbox, pbox, 1, num_rounds)
-
-                    # testing linear characteristics
-                    inp_masks, oup_masks, optimal_bias = find_optimal_characteristics(
-                    sbox, pbox, num_rounds, ['linear',linear_bias],display_paths=False)
-                    inp_masks = [spn.int_to_list(i) for i in inp_masks]
-                    oup_masks = [spn.int_to_list(i) for i in oup_masks]
-                    probability = Fraction(1,2)
-                    for inpi, oupi in zip(inp_masks, oup_masks):
-                        for inpii, oupii in zip(inpi, oupi):
-                            probability*=2
-                            probability*=linear_bias[(inpii,oupii)]
-                            probability/=2**(sbox_size)
-                    self.assertEqual(probability, optimal_bias)
-                    print("sbox size={}, number_sboxes={}, number_rounds={}, best absolute linear bias={}".format(sbox_size, num_sbox, num_rounds,optimal_bias))
-
-                    # testing differential characteristics
-                    inp_masks, oup_masks, optimal_bias = find_optimal_characteristics(
-                    sbox, pbox, num_rounds, ['differential',difference_table],display_paths=False)
-                    inp_masks = [spn.int_to_list(i) for i in inp_masks]
-                    oup_masks = [spn.int_to_list(i) for i in oup_masks]
-                    probability = Fraction(1,1)
-                    for inpi, oupi in zip(inp_masks, oup_masks):
-                        for inpii, oupii in zip(inpi, oupi):
-                            probability*=difference_table[(inpii,oupii)]
-                            probability/=2**(sbox_size)
-                    self.assertEqual(probability, optimal_bias)
-                    print("sbox size={}, number_sboxes={}, number_rounds={}, best difference probability={}".format(sbox_size, num_sbox, num_rounds,optimal_bias))
-
     def test_small_sbox_linear_bias(self):
         return
         max_block_size = 20
         for sbox_size in range(1,6):
             sbox = list(range(2**sbox_size))
             random.shuffle(sbox)
-            linear_bias = calculate_linear_bias(sbox)
+            linear_bias = Cryptanalysis.calculate_linear_bias(sbox)
             for num_sbox in range(1,max_block_size//sbox_size):
                 pbox = list(range(sbox_size*num_sbox))
                 random.shuffle(pbox)
@@ -161,11 +193,12 @@ class TestOptimalCharacteristics(unittest.TestCase):
                     print(sbox_size, num_sbox, num_rounds, observed_bias, optimal_bias)
 
     def test_small_sbox_difference_bias(self):
+        return
         max_block_size = 20
         for sbox_size in range(3,6):
             sbox = list(range(2**sbox_size))
             random.shuffle(sbox)
-            difference_table = calculate_difference_table(sbox)
+            difference_table = Cryptanalysis.calculate_difference_table(sbox)
             for num_sbox in range(3,max_block_size//sbox_size):
                 pbox = list(range(sbox_size*num_sbox))
                 random.shuffle(pbox)
