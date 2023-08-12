@@ -1,89 +1,18 @@
 import unittest
+import sys
+sys.path.append('../auto_cryptanalysis')
 import random
 from fractions import Fraction
 from collections import Counter
 from spn import SPN
-from cryptanalysis import Cryptanalysis, DifferentialCryptanalysis, LinearCryptanalysis, CharacteristicSearcher
+from utils import calculate_linear_bias, calculate_difference_table, parity
+from cryptanalysis import Cryptanalysis
+from differential_cryptanalysis import DifferentialCryptanalysis
+from linear_cryptanalysis import LinearCryptanalysis
+from characteristic_searcher import CharacteristicSearcher
 from z3 import sat
 
-class TestHeys(unittest.TestCase):
-    """
-    testcases for sample implementation as per heys' tutorial
-    """
-    def setUp(self):
-        self.sbox = [0xE, 4, 0xD, 1, 2, 0xF, 0xB, 8, 3, 0xA, 6, 0xC, 5, 9, 0, 7]
-        self.pbox = [0,4,8,12,1,5,9,13,2,6,10,14,3,7,11,15]
-        self.spn = SPN(self.sbox, self.pbox, 1, 4)
-
-    def test_linear_approx_table(self):
-        return
-        output_table = [
-            [+8,  0, 0,   0, 0,   0, 0,   0, 0,   0, 0,   0, 0,   0, 0,   0],
-            [0,   0, -2, -2, 0,   0, -2, +6, +2, +2, 0,   0, +2, +2, 0,   0],
-            [0,   0, -2, -2, 0,   0, -2, -2, 0,   0, +2, +2, 0,   0, -6, +2],
-            [0,   0, 0,   0, 0,   0, 0,   0, +2, -6, -2, -2, +2, +2, -2, -2],
-            [0,  +2, 0,  -2, -2, -4, -2,  0, 0,  -2, 0,  +2, +2, -4, +2,  0],
-            [0,  -2, -2,  0, -2,  0, +4, +2, -2,  0, -4, +2, 0,  -2, -2,  0],
-            [0,  +2, -2, +4, +2,  0, 0,  +2, 0,  -2, +2, +4, -2,  0, 0,  -2],
-            [0,  -2, 0,  +2, +2, -4, +2,  0, -2,  0, +2,  0, +4, +2, 0,  +2],
-            [0,   0, 0,   0, 0,   0, 0,   0, -2, +2, +2, -2, +2, -2, -2, -6],
-            [0,   0, -2, -2, 0,   0, -2, -2, -4,  0, -2, +2, 0,  +4, +2, -2],
-            [0,  +4, -2, +2, -4,  0, +2, -2, +2, +2, 0,   0, +2, +2, 0,   0],
-            [0,  +4, 0,  -4, +4,  0, +4,  0, 0,   0, 0,   0, 0,   0, 0,   0],
-            [0,  -2, +4, -2, -2,  0, +2,  0, +2,  0, +2, +4, 0,  +2, 0,  -2],
-            [0,  +2, +2,  0, -2, +4, 0,  +2, -4, -2, +2,  0, +2,  0, 0,  +2],
-            [0,  +2, +2,  0, -2, -4, 0,  +2, -2,  0, 0,  -2, -4, +2, -2,  0],
-            [0,  -2, -4, -2, -2,  0, +2,  0, 0,  -2, +4, -2, -2,  0, +2,  0],
-        ]
-        linear_approx_table = Cryptanalysis.calculate_linear_bias(self.sbox, False)
-        for (i,j),v in linear_approx_table.items():
-            self.assertEqual(v, output_table[i][j])
-
-    def test_difference_distribution_table(self):
-        return
-        output_table = [
-            [16,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-            [0,0,0,2,0,0,0,2,0,2,4,0,4,2,0,0],
-            [0,0,0,2,0,6,2,2,0,2,0,0,0,0,2,0],
-            [0,0,2,0,2,0,0,0,0,4,2,0,2,0,0,4],
-            [0,0,0,2,0,0,6,0,0,2,0,4,2,0,0,0],
-            [0,4,0,0,0,2,2,0,0,0,4,0,2,0,0,2],
-            [0,0,0,4,0,4,0,0,0,0,0,0,2,2,2,2],
-            [0,0,2,2,2,0,2,0,0,2,2,0,0,0,0,4],
-            [0,0,0,0,0,0,2,2,0,0,0,4,0,4,2,2],
-            [0,2,0,0,2,0,0,4,2,0,2,2,2,0,0,0],
-            [0,2,2,0,0,0,0,0,6,0,0,2,0,0,4,0],
-            [0,0,8,0,0,2,0,2,0,0,0,0,0,2,0,2],
-            [0,2,0,0,2,2,2,0,0,0,0,2,0,6,0,0],
-            [0,4,0,0,0,0,0,4,2,0,2,0,2,0,2,0],
-            [0,0,2,4,2,0,0,0,6,0,0,0,0,0,2,0],
-            [0,2,0,0,6,0,0,0,0,4,0,2,0,0,2,0],
-        ]
-        difference_distribution_table = Cryptanalysis.calculate_difference_table(self.sbox)
-        for (i,j),v in difference_distribution_table.items():
-            self.assertEqual(v, output_table[i][j])
-
-
 class TestCharacteristicSearcher(unittest.TestCase):
-    def test_random_sbox(self):
-        return
-        for sbox_size in range(2,9):
-            sbox = list(range(2**sbox_size))
-            random.shuffle(sbox)
-            linear_approx_table = Cryptanalysis.calculate_linear_bias(sbox, False)
-            difference_distribution_table = Cryptanalysis.calculate_difference_table(sbox)
-            row_sum = 2**(sbox_size-1)
-            for i in range(len(sbox)):
-                for j in range(len(sbox)):
-                    self.assertEqual(linear_approx_table[(i,j)]&1,0) #always even
-                    self.assertEqual(difference_distribution_table[(i,j)]&1,0) #always even
-                # sum of any row or any column would be +-len(sbox)//2
-                self.assertEqual(abs(sum(linear_approx_table[(i,j)] for j in range(len(sbox)))),row_sum)
-                self.assertEqual(abs(sum(linear_approx_table[(j,i)] for j in range(len(sbox)))),row_sum)
-                # sum of any row or column of difference distribution would be len(sbox)
-                self.assertEqual(sum(difference_distribution_table[(i,j)] for j in range(len(sbox))),len(sbox))
-                self.assertEqual(sum(difference_distribution_table[(j,i)] for j in range(len(sbox))),len(sbox))
-
     def test_initialize_sbox_structure(self):
         for sbox_size in range(1,6):
             sbox = list(range(2**sbox_size))
@@ -97,7 +26,7 @@ class TestCharacteristicSearcher(unittest.TestCase):
                     characteristic_searcher.initialize_sbox_structure()
                     self.assertEqual(characteristic_searcher.solver.check(), sat)
                     model = characteristic_searcher.solver.model()
-                    breakpoint()
+                    # breakpoint()
 
 
 
@@ -156,7 +85,7 @@ class TestCharacteristicSearcher(unittest.TestCase):
         testing linear characteristics
         """
         return
-        linear_bias = Cryptanalysis.calculate_linear_bias(self.sbox)
+        linear_bias = calculate_linear_bias(self.sbox)
         max_bias = max([linear_bias[(i,j)] for i in range(1,len(self.sbox)) for j in range(1,len(self.sbox))])
         _,_,optimal_bias = find_optimal_characteristics(self.sbox, self.pbox, 1,['linear',linear_bias],display_paths=False)
         self.assertEqual(optimal_bias, max_bias/len(self.sbox))
@@ -175,7 +104,7 @@ class TestCharacteristicSearcher(unittest.TestCase):
         for sbox_size in range(1,6):
             sbox = list(range(2**sbox_size))
             random.shuffle(sbox)
-            linear_bias = Cryptanalysis.calculate_linear_bias(sbox)
+            linear_bias = calculate_linear_bias(sbox)
             for num_sbox in range(1,max_block_size//sbox_size):
                 pbox = list(range(sbox_size*num_sbox))
                 random.shuffle(pbox)
@@ -198,7 +127,7 @@ class TestCharacteristicSearcher(unittest.TestCase):
         for sbox_size in range(3,6):
             sbox = list(range(2**sbox_size))
             random.shuffle(sbox)
-            difference_table = Cryptanalysis.calculate_difference_table(sbox)
+            difference_table = calculate_difference_table(sbox)
             for num_sbox in range(3,max_block_size//sbox_size):
                 pbox = list(range(sbox_size*num_sbox))
                 random.shuffle(pbox)
