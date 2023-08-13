@@ -1,11 +1,9 @@
 import unittest
-import sys
-sys.path.append('../auto_cryptanalysis')
 import random
 from fractions import Fraction
-from spn import SPN
-from utils import calculate_linear_bias, calculate_difference_table, parity
-from characteristic_searcher import CharacteristicSearcher
+from cryptanalysis.spn import SPN
+from cryptanalysis.utils import calculate_linear_bias, calculate_difference_table, parity
+from cryptanalysis.characteristic_searcher import CharacteristicSearcher
 from z3 import sat, BitVecVal, BoolVal
 
 class TestCharacteristicSearcher(unittest.TestCase):

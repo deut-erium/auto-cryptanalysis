@@ -1,8 +1,6 @@
 import random
 import unittest
-import sys
-sys.path.append('../auto_cryptanalysis')
-from utils import calculate_linear_bias, calculate_difference_table
+from cryptanalysis.utils import calculate_linear_bias, calculate_difference_table
 
 class TestHeys(unittest.TestCase):
     """

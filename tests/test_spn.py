@@ -1,9 +1,6 @@
 import unittest
 import random
-import sys
-sys.path.append('../auto_cryptanalysis')
-from spn import SPN, gen_pbox
-
+from cryptanalysis.spn import SPN, gen_pbox
 
 
 class TestSPN(unittest.TestCase):

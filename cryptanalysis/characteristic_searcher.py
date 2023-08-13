@@ -2,7 +2,10 @@ from collections import defaultdict
 from math import log2
 from itertools import islice
 from z3 import Optimize, BitVec, sat, Concat, And, Not, Implies, Extract, Function, BitVecSort, RealSort, Product
-from utils import calculate_linear_bias, calculate_difference_table
+from .utils import calculate_linear_bias, calculate_difference_table
+
+__all__ = ["CharacteristicSearcher"]
+
 
 def all_smt(solver, initial_terms):
     def block_term(solver, model, term):
@@ -299,7 +302,7 @@ class CharacteristicSearcher:
         # specify which blocks to definitely exclude in the characteristic
         for i in exclude_blocks:
             self.solver.add(self.inps[num_rounds - 1][i] == 0)
-        print(include_blocks, exclude_blocks)
+        # print(include_blocks, exclude_blocks)
         # if a block is neither in include_blocks or exclude_blocks
         # the solver finds the best path which may or may not set it to active
         self.solver.maximize(self.objectives['reduced'](num_rounds))

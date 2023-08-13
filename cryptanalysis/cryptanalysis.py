@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
-from spn import SPN
-from characteristic_searcher import CharacteristicSearcher
+from .spn import SPN
+from .characteristic_searcher import CharacteristicSearcher
 
+__all__ = ["Cryptanalysis"]
 
 class Cryptanalysis(SPN, ABC):
     def __init__(self, sbox, pbox, num_rounds, mode='differential'):

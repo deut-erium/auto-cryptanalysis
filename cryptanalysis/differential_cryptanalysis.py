@@ -1,7 +1,9 @@
 from itertools import product
 from collections import Counter
 import random
-from cryptanalysis import Cryptanalysis
+from .cryptanalysis import Cryptanalysis
+
+__all__ = ["DifferentialCryptanalysis"]
 
 class DifferentialCryptanalysis(Cryptanalysis):
     def __init__(self, sbox, pbox, num_rounds):

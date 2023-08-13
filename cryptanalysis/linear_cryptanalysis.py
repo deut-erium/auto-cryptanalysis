@@ -2,7 +2,9 @@ from collections import Counter
 from itertools import product
 import random
 from tqdm import tqdm
-from cryptanalysis import Cryptanalysis
+from .cryptanalysis import Cryptanalysis
+
+__all__ = ["LinearCryptanalysis"]
 
 class LinearCryptanalysis(Cryptanalysis):
     def __init__(self, sbox, pbox, num_rounds):
