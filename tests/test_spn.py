@@ -12,8 +12,8 @@ class TestSPN(unittest.TestCase):
                 pbox = list(range(sbox_size * 10))
                 spn = SPN(sbox, pbox, 1, 1)
                 for i in range(2**sbox_size):
-                    self.assertEqual(spn.inv_sbox(spn.sbox(i)), i)
-                    self.assertEqual(spn.sbox(spn.inv_sbox(i)), i)
+                    self.assertEqual(spn.inv_sub(spn.sub(i)), i)
+                    self.assertEqual(spn.sub(spn.inv_sub(i)), i)
 
     def test_pbox(self):
         for sbox_size in range(1, 10):
@@ -24,26 +24,26 @@ class TestSPN(unittest.TestCase):
                     pbox = list(range(sbox_size * num_sbox))
                     random.shuffle(pbox)
                     spn = SPN(sbox, pbox, 1, 1)
-                    for i in range(len(spn.PBOX)):
+                    for i in range(len(spn.pbox)):
                         self.assertEqual(
                             spn.perm(
                                 1 << (
-                                    spn.BLOCK_SIZE -
+                                    spn.block_size -
                                     1 -
                                     i)) >> (
-                                spn.BLOCK_SIZE -
+                                spn.block_size -
                                 1 -
-                                spn.PBOX[i]),
+                                spn.pbox[i]),
                             1)
                         self.assertEqual(
                             spn.inv_perm(
                                 1 << (
-                                    spn.BLOCK_SIZE -
+                                    spn.block_size -
                                     1 -
                                     i)) >> (
-                                spn.BLOCK_SIZE -
+                                spn.block_size -
                                 1 -
-                                spn.PINV[i]),
+                                spn.pinv[i]),
                             1)
                     for _ in range(10):
                         i = random.randint(0, 2**(sbox_size * num_sbox) - 1)
@@ -58,9 +58,9 @@ class TestSPN(unittest.TestCase):
                 random.shuffle(sbox)
                 random.shuffle(pbox)
                 spn = SPN(sbox, pbox, 1, 3)
-                self.assertEqual(spn.BLOCK_SIZE, sbox_size * num_sboxes)
-                self.assertEqual(spn.NUM_SBOX, num_sboxes)
-                self.assertEqual(spn.BOX_SIZE, sbox_size)
+                self.assertEqual(spn.block_size, sbox_size * num_sboxes)
+                self.assertEqual(spn.num_sbox, num_sboxes)
+                self.assertEqual(spn.box_size, sbox_size)
                 rand_inputs = set()
                 for _ in range(100):
                     inp = random.randint(0, 2**(sbox_size * num_sboxes) - 1)
