@@ -1,3 +1,12 @@
+"""
+Module for performing differential cryptanalysis on Substitution Permutation Network based ciphers.
+
+Classes:
+- DifferentialCryptanalysis: Class for performing differential cryptanalysis.
+
+Usage:
+Import the `differential_cryptanalysis` module to access the `DifferentialCryptanalysis` class.
+"""
 from itertools import product
 from collections import Counter
 import random
@@ -5,8 +14,30 @@ from .cryptanalysis import Cryptanalysis
 
 __all__ = ["DifferentialCryptanalysis"]
 
+
 class DifferentialCryptanalysis(Cryptanalysis):
+    """
+    Class for performing differential cryptanalysis.
+
+    Methods:
+    - __init__: Initialize the differential cryptanalysis algorithm.
+    - find_keybits: Find the key bits using differential cryptanalysis.
+    - find_last_roundkey: Find the last round key using differential cryptanalysis.
+    - generate_encryption_pairs: Generate encryption pairs for differential cryptanalysis.
+    """
+
     def __init__(self, sbox, pbox, num_rounds):
+        """
+        Initialize the DifferentialCryptanalysis algorithm.
+
+        Parameters:
+        - sbox: The substitution box used in the SPN
+        - pbox: The permutation box used in the SPN
+        - num_rounds: The number of rounds in the SPN
+
+        Notes:
+        - This method is called when creating an instance of the DifferentialCryptanalysis class.
+        """
         super().__init__(sbox, pbox, num_rounds, 'differential')
 
     def find_keybits(self, out_mask, ct_pairs, known_keyblocks=()):
@@ -27,17 +58,19 @@ class DifferentialCryptanalysis(Cryptanalysis):
         out_blocks = self.int_to_list(out_mask)
         active_blocks = [i for i, v in enumerate(out_blocks) if v and i not in known_keyblocks]
         key_diffcounts = Counter()
-        for klst in product(range(len(self.SBOX)), repeat=len(active_blocks)):
-            key = [0] * self.NUM_SBOX
+        for klst in product(range(len(self.sbox)), repeat=len(active_blocks)):
+            key = [0] * self.num_sbox
             for i, v in zip(active_blocks, klst):
                 key[i] = v
             key = self.list_to_int(key)
             for ct1, ct2 in ct_pairs:
-                diff = self.dec_partial_last_noperm(ct1, [key]) ^ self.dec_partial_last_noperm(ct2, [key])
+                diff = self.dec_partial_last_noperm(
+                    ct1, [key]) ^ self.dec_partial_last_noperm(
+                    ct2, [key])
                 diff = self.int_to_list(diff)
                 key_diffcounts[key] += all(out_blocks[i] == diff[i] for i in active_blocks)
                 # key_diffcounts[key] += all(i==j for i,j in zip(out_blocks,diff))
-        topn = key_diffcounts.most_common(self.BOX_SIZE)
+        topn = key_diffcounts.most_common(self.box_size)
         for i, v in topn:
             print(self.int_to_list(i), v)
         return topn[0]
@@ -60,13 +93,13 @@ class DifferentialCryptanalysis(Cryptanalysis):
         Returns:
             list: The last round key determined based on the output masks.
         """
-        final_key = [None] * self.NUM_SBOX
+        final_key = [None] * self.num_sbox
         all_pt_ct_pairs = self.generate_encryption_pairs(outmasks, cutoff, multiple=multiple)
         for pt_ct_pairs, (_, out_mask, _) in zip(all_pt_ct_pairs, outmasks):
             ct_pairs = [i[1] for i in pt_ct_pairs]
             # print("out mask",self.int_to_list(out_mask))
             k = self.find_keybits(out_mask, ct_pairs, [
-                    i for i, v in enumerate(final_key) if v is not None])
+                i for i, v in enumerate(final_key) if v is not None])
             kr = self.int_to_list(k[0])
             print(kr)
             for i, v in enumerate(self.int_to_list(out_mask)):
@@ -75,7 +108,6 @@ class DifferentialCryptanalysis(Cryptanalysis):
             print(final_key)
             print()
         return final_key
-
 
     def generate_encryption_pairs(self, outmasks, cutoff=10000, multiple=1000):
         """Generates encryption pairs for a set of output masks.
@@ -120,7 +152,7 @@ class DifferentialCryptanalysis(Cryptanalysis):
                 pt_pairs.append((i, i ^ inp_mask))
             self.encryptions.update(new_encs)
             while len(pt_pairs) < threshold:
-                r = random.randint(0, 2**(self.NUM_SBOX * self.BOX_SIZE) - 1)
+                r = random.randint(0, 2**(self.num_sbox * self.box_size) - 1)
                 if r in self.encryptions or r ^ inp_mask in self.encryptions:
                     continue
                 self.encryptions[r] = None

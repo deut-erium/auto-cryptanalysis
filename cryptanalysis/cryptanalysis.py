@@ -1,10 +1,33 @@
+"""
+Module for performing cryptanalysis on Substitution Permutation Network cipher.
+
+Classes:
+- Cryptanalysis: Abstract base class for cryptanalysis algorithms.
+
+Usage:
+Import the `cryptanalysis` module to access the `Cryptanalysis` class.
+"""
 from abc import ABC, abstractmethod
 from .spn import SPN
 from .characteristic_searcher import CharacteristicSearcher
 
 __all__ = ["Cryptanalysis"]
 
+
 class Cryptanalysis(SPN, ABC):
+    """
+    Abstract base class for cryptanalysis algorithms.
+
+    Methods:
+    - __init__: Initialize the cryptanalysis class.
+    - dec_partial_last_noperm: Partially decrypt the ciphertext using last round without permutation.
+    - dec_partial_last_withperm: Partially decrypt the ciphertext using last round with permutation.
+    - update_encryptions: Update the encryption pairs used for analysis.
+    - batch_encrypt: Encrypt multiple plaintexts in batch mode.
+    - find_keybits: Find the key bits of the encryption algorithm.
+    - generate_encryption_pairs: Generate encryption pairs for cryptanalysis.
+    - find_last_roundkey: Find the last round key of the encryption algorithm.
+    """
     def __init__(self, sbox, pbox, num_rounds, mode='differential'):
         """
         This method initializes the Cryptanalysis class by calling the __init__ method of the SPN class
@@ -20,7 +43,7 @@ class Cryptanalysis(SPN, ABC):
         super().__init__(sbox, pbox, 0, num_rounds)
         self.mode = mode
         self.characteristic_searcher = CharacteristicSearcher(
-            self.SBOX, self.PBOX, num_rounds - 1, mode)
+            self.sbox, self.pbox, num_rounds - 1, mode)
         self.encryptions = {}  # store of the encryptions utilized by the cryptanalysis
 
     def dec_partial_last_noperm(self, ciphertext, round_keys):
@@ -35,11 +58,11 @@ class Cryptanalysis(SPN, ABC):
         # partial decryption
         # round keys in reverse order
         ciphertext = ciphertext ^ round_keys[0]
-        ciphertext = self.inv_sbox(ciphertext)
+        ciphertext = self.inv_sub(ciphertext)
         for round_key in round_keys[1:self.rounds]:
             ciphertext ^= round_key
             ciphertext = self.inv_perm(ciphertext)
-            ciphertext = self.inv_sbox(ciphertext)
+            ciphertext = self.inv_sub(ciphertext)
         if len(round_keys) == self.rounds + 1:
             ciphertext ^= round_keys[-1]
         return ciphertext
@@ -56,7 +79,7 @@ class Cryptanalysis(SPN, ABC):
         for round_key in round_keys[:self.rounds]:
             ciphertext ^= round_key
             ciphertext = self.inv_perm(ciphertext)
-            ciphertext = self.inv_sbox(ciphertext)
+            ciphertext = self.inv_sub(ciphertext)
         if len(round_keys) == self.rounds + 1:
             ciphertext ^= round_keys[-1]
         return ciphertext
