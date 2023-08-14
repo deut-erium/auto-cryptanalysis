@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>cryptanalysis.utils API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="The `utils` module provides utility functions for various operations …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,12 +22,131 @@
 <h1 class="title">Module <code>cryptanalysis.utils</code></h1>
 </header>
 <section id="section-intro">
+<p>The <code>utils</code> module provides utility functions for various operations.</p>
+<p>Functions:
+- all_smt: Generate all satisfying models for a given set of terms using an SMT solver.
+- parity: Calculate the parity of a binary number.
+- calculate_linear_bias: Calculate the linear bias of a binary function.
+- calculate_difference_table: Calculate the difference table for a binary function.</p>
+<p>Usage:
+Import the <code>utils</code> module to access the utility functions. Call the desired function with the required parameters.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from collections import Counter
+<pre><code class="python">&#34;&#34;&#34;
+The `utils` module provides utility functions for various operations.
+
+Functions:
+- all_smt: Generate all satisfying models for a given set of terms using an SMT solver.
+- parity: Calculate the parity of a binary number.
+- calculate_linear_bias: Calculate the linear bias of a binary function.
+- calculate_difference_table: Calculate the difference table for a binary function.
+
+Usage:
+Import the `utils` module to access the utility functions. Call the desired function with the required parameters.
+&#34;&#34;&#34;
+from collections import Counter
 from tqdm import tqdm
+from z3 import sat
+
+__all__ = [
+    &#34;all_smt&#34;,
+    &#34;parity&#34;,
+    &#34;calculate_linear_bias&#34;,
+    &#34;calculate_difference_table&#34;]
+
+
+def all_smt(solver, initial_terms):
+    &#34;&#34;&#34;
+    Generate all satisfying models for a given set of initial terms using an SMT solver.
+
+    Parameters
+    ----------
+    solver : z3.Solver or z3.Optimize instance
+        An instance of an SMT solver.
+
+    initial_terms : list
+        A list of initial terms to generate satisfying models for.
+
+    Yields
+    ------
+    model : Model
+        A satisfying model for the set of initial terms.
+
+    Notes
+    -----
+    This function uses a recursive approach to generate all satisfying models for a given set of initial terms.
+    It relies on the `block_term` and `fix_term` helper functions.
+
+    The `block_term` function adds a constraint to the solver that blocks a specific term from being equal to its
+    value in the current model.
+
+    The `fix_term` function adds a constraint to the solver that fixes a specific term to its value in the current model.
+
+    The `all_smt_rec` function is a recursive helper function that performs the actual generation of satisfying models.
+    &#34;&#34;&#34;
+    def block_term(solver, model, term):
+        &#34;&#34;&#34;
+        Add a constraint to the solver that blocks a specific term from being equal to its value in the current model.
+
+        Parameters
+        ----------
+        solver : z3.Solver
+            An instance of an SMT solver.
+
+        model : Model
+            The current satisfying model.
+
+        term : Term
+            The term to block in the solver.
+        &#34;&#34;&#34;
+        solver.add(term != model.eval(term))
+
+    def fix_term(solver, model, term):
+        &#34;&#34;&#34;
+        Add a constraint to the solver that fixes a specific term to its value in the current model.
+
+        Parameters
+        ----------
+        solver : z3.Solver
+            An instance of an SMT solver.
+
+        model : Model
+            The current satisfying model.
+
+        term : Term
+            The term to fix in the solver.
+        &#34;&#34;&#34;
+        solver.add(term == model.eval(term))
+
+    def all_smt_rec(terms):
+        &#34;&#34;&#34;
+        Recursive helper function to generate all satisfying models for a given set of terms.
+
+        Parameters
+        ----------
+        terms : list
+            A list of terms to generate satisfying models for.
+
+        Yields
+        ------
+        model : Model
+            A satisfying model for the set of terms.
+        &#34;&#34;&#34;
+        if sat == solver.check():
+            model = solver.model()
+            yield model
+            for i in range(len(terms)):
+                solver.push()
+                block_term(solver, model, terms[i])
+                for j in range(i):
+                    fix_term(solver, model, terms[j])
+                yield from all_smt_rec(terms[i:])
+                solver.pop()
+
+    yield from all_smt_rec(list(initial_terms))
+
 
 def parity(x):
     &#34;&#34;&#34;Calculates the parity of an integer.
@@ -47,6 +166,7 @@ def parity(x):
         res ^= 1
         x &amp;= (x - 1)
     return res
+
 
 def calculate_linear_bias(sbox, no_sign=True, fraction=False):
     &#34;&#34;&#34;Calculates the linear bias of an S-box.
@@ -77,6 +197,7 @@ def calculate_linear_bias(sbox, no_sign=True, fraction=False):
             bias[i] /= n
     return bias
 
+
 def calculate_difference_table(sbox):
     &#34;&#34;&#34;Calculates the difference distribution table for an S-box.
 
@@ -106,6 +227,125 @@ def calculate_difference_table(sbox):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
+<dt id="cryptanalysis.utils.all_smt"><code class="name flex">
+<span>def <span class="ident">all_smt</span></span>(<span>solver, initial_terms)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generate all satisfying models for a given set of initial terms using an SMT solver.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>solver</code></strong> :&ensp;<code>z3.Solver</code> or <code>z3.Optimize instance</code></dt>
+<dd>An instance of an SMT solver.</dd>
+<dt><strong><code>initial_terms</code></strong> :&ensp;<code>list</code></dt>
+<dd>A list of initial terms to generate satisfying models for.</dd>
+</dl>
+<h2 id="yields">Yields</h2>
+<dl>
+<dt><strong><code>model</code></strong> :&ensp;<code>Model</code></dt>
+<dd>A satisfying model for the set of initial terms.</dd>
+</dl>
+<h2 id="notes">Notes</h2>
+<p>This function uses a recursive approach to generate all satisfying models for a given set of initial terms.
+It relies on the <code>block_term</code> and <code>fix_term</code> helper functions.</p>
+<p>The <code>block_term</code> function adds a constraint to the solver that blocks a specific term from being equal to its
+value in the current model.</p>
+<p>The <code>fix_term</code> function adds a constraint to the solver that fixes a specific term to its value in the current model.</p>
+<p>The <code>all_smt_rec</code> function is a recursive helper function that performs the actual generation of satisfying models.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def all_smt(solver, initial_terms):
+    &#34;&#34;&#34;
+    Generate all satisfying models for a given set of initial terms using an SMT solver.
+
+    Parameters
+    ----------
+    solver : z3.Solver or z3.Optimize instance
+        An instance of an SMT solver.
+
+    initial_terms : list
+        A list of initial terms to generate satisfying models for.
+
+    Yields
+    ------
+    model : Model
+        A satisfying model for the set of initial terms.
+
+    Notes
+    -----
+    This function uses a recursive approach to generate all satisfying models for a given set of initial terms.
+    It relies on the `block_term` and `fix_term` helper functions.
+
+    The `block_term` function adds a constraint to the solver that blocks a specific term from being equal to its
+    value in the current model.
+
+    The `fix_term` function adds a constraint to the solver that fixes a specific term to its value in the current model.
+
+    The `all_smt_rec` function is a recursive helper function that performs the actual generation of satisfying models.
+    &#34;&#34;&#34;
+    def block_term(solver, model, term):
+        &#34;&#34;&#34;
+        Add a constraint to the solver that blocks a specific term from being equal to its value in the current model.
+
+        Parameters
+        ----------
+        solver : z3.Solver
+            An instance of an SMT solver.
+
+        model : Model
+            The current satisfying model.
+
+        term : Term
+            The term to block in the solver.
+        &#34;&#34;&#34;
+        solver.add(term != model.eval(term))
+
+    def fix_term(solver, model, term):
+        &#34;&#34;&#34;
+        Add a constraint to the solver that fixes a specific term to its value in the current model.
+
+        Parameters
+        ----------
+        solver : z3.Solver
+            An instance of an SMT solver.
+
+        model : Model
+            The current satisfying model.
+
+        term : Term
+            The term to fix in the solver.
+        &#34;&#34;&#34;
+        solver.add(term == model.eval(term))
+
+    def all_smt_rec(terms):
+        &#34;&#34;&#34;
+        Recursive helper function to generate all satisfying models for a given set of terms.
+
+        Parameters
+        ----------
+        terms : list
+            A list of terms to generate satisfying models for.
+
+        Yields
+        ------
+        model : Model
+            A satisfying model for the set of terms.
+        &#34;&#34;&#34;
+        if sat == solver.check():
+            model = solver.model()
+            yield model
+            for i in range(len(terms)):
+                solver.push()
+                block_term(solver, model, terms[i])
+                for j in range(i):
+                    fix_term(solver, model, terms[j])
+                yield from all_smt_rec(terms[i:])
+                solver.pop()
+
+    yield from all_smt_rec(list(initial_terms))</code></pre>
+</details>
+</dd>
 <dt id="cryptanalysis.utils.calculate_difference_table"><code class="name flex">
 <span>def <span class="ident">calculate_difference_table</span></span>(<span>sbox)</span>
 </code></dt>
@@ -266,6 +506,7 @@ number of set bits is even, and 1 otherwise.</p>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
+<li><code><a title="cryptanalysis.utils.all_smt" href="#cryptanalysis.utils.all_smt">all_smt</a></code></li>
 <li><code><a title="cryptanalysis.utils.calculate_difference_table" href="#cryptanalysis.utils.calculate_difference_table">calculate_difference_table</a></code></li>
 <li><code><a title="cryptanalysis.utils.calculate_linear_bias" href="#cryptanalysis.utils.calculate_linear_bias">calculate_linear_bias</a></code></li>
 <li><code><a title="cryptanalysis.utils.parity" href="#cryptanalysis.utils.parity">parity</a></code></li>

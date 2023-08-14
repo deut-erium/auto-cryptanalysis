@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>cryptanalysis.characteristic_searcher API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="characteristic_searcher
+…" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,38 +23,31 @@
 <h1 class="title">Module <code>cryptanalysis.characteristic_searcher</code></h1>
 </header>
 <section id="section-intro">
+<h1 id="characteristic_searcher">characteristic_searcher</h1>
+<p>This module provides the CharacteristicSearcher class for performing characteristic search in cryptanalysis.</p>
+<p>Classes:
+- CharacteristicSearcher: Implements the search algorithm for finding linear and differential characteristics in substitution permutation network based cipher.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from collections import defaultdict
+<pre><code class="python">&#34;&#34;&#34;
+characteristic_searcher
+===========
+
+This module provides the CharacteristicSearcher class for performing characteristic search in cryptanalysis.
+
+Classes:
+- CharacteristicSearcher: Implements the search algorithm for finding linear and differential characteristics in substitution permutation network based cipher.
+
+&#34;&#34;&#34;
+from collections import defaultdict
 from math import log2
 from itertools import islice
 from z3 import Optimize, BitVec, sat, Concat, And, Not, Implies, Extract, Function, BitVecSort, RealSort, Product
-from .utils import calculate_linear_bias, calculate_difference_table
+from .utils import calculate_linear_bias, calculate_difference_table, all_smt
 
 __all__ = [&#34;CharacteristicSearcher&#34;]
-
-
-def all_smt(solver, initial_terms):
-    def block_term(solver, model, term):
-        solver.add(term != model.eval(term))
-
-    def fix_term(solver, model, term):
-        solver.add(term == model.eval(term))
-
-    def all_smt_rec(terms):
-        if sat == solver.check():
-            model = solver.model()
-            yield model
-            for i in range(len(terms)):
-                solver.push()
-                block_term(solver, model, terms[i])
-                for j in range(i):
-                    fix_term(solver, model, terms[j])
-                yield from all_smt_rec(terms[i:])
-                solver.pop()
-    yield from all_smt_rec(list(initial_terms))
 
 
 class CharacteristicSearcher:
@@ -74,6 +68,7 @@ class CharacteristicSearcher:
             set of included and excluded blocks
         solver: SMT solver (optimize) instance to search the characteristics
     &#34;&#34;&#34;
+
     def __init__(self, sbox, pbox, num_rounds, mode=&#39;linear&#39;):
         &#34;&#34;&#34;Initializes the CharacteristicSolver with the given sbox, pbox, num_rounds and mode.
 
@@ -113,10 +108,10 @@ class CharacteristicSearcher:
         and output layers for further processing.
         &#34;&#34;&#34;
         n = self.box_size
-        self.inps = [[BitVec(&#39;r{}_i{}&#39;.format(r, i), n)
-                      for i in range(self.num_blocks)] for r in range(self.num_rounds + 1)]
-        self.oups = [[BitVec(&#39;r{}_o{}&#39;.format(r, i), n) for i in range(self.num_blocks)]
-                     for r in range(self.num_rounds)]
+        self.inps = [[BitVec(&#39;r{}_i{}&#39;.format(r, i), n) for i in range(
+            self.num_blocks)] for r in range(self.num_rounds + 1)]
+        self.oups = [[BitVec(&#39;r{}_o{}&#39;.format(r, i), n) for i in range(
+            self.num_blocks)] for r in range(self.num_rounds)]
         # permutation of output of sboxes are inputs of next round
         for i in range(self.num_rounds):
             if self.num_blocks == 1:
@@ -293,9 +288,9 @@ class CharacteristicSearcher:
                 self.init_characteristic_solver(-1)  # search best pruning
 
     def solve_for_blocks(self, include_blocks=(), exclude_blocks=(),
-            num_rounds=0,
-            num_sols=1,
-            display_paths=True):
+                         num_rounds=0,
+                         num_sols=1,
+                         display_paths=True):
         &#34;&#34;&#34;Solves the characteristic for the specified blocks and maximizes the objective function.
 
             This method searches the characteristic for the specified blocks,
@@ -388,8 +383,8 @@ class CharacteristicSearcher:
                 # i.e it should not be the case where all the undiscovered blocks are
                 # inactive i.e 0
                 self.solver.add(Not(And(
-                        [self.inps[nr - 1][i] == 0 for i, v in enumerate(discovered) if not v]
-                        )))
+                    [self.inps[nr - 1][i] == 0 for i, v in enumerate(discovered) if not v]
+                )))
         return masks
 
     def search_exclusive_masks(self, prune_level=-1, repeat=1):
@@ -543,6 +538,7 @@ set of included and excluded blocks</dd>
             set of included and excluded blocks
         solver: SMT solver (optimize) instance to search the characteristics
     &#34;&#34;&#34;
+
     def __init__(self, sbox, pbox, num_rounds, mode=&#39;linear&#39;):
         &#34;&#34;&#34;Initializes the CharacteristicSolver with the given sbox, pbox, num_rounds and mode.
 
@@ -582,10 +578,10 @@ set of included and excluded blocks</dd>
         and output layers for further processing.
         &#34;&#34;&#34;
         n = self.box_size
-        self.inps = [[BitVec(&#39;r{}_i{}&#39;.format(r, i), n)
-                      for i in range(self.num_blocks)] for r in range(self.num_rounds + 1)]
-        self.oups = [[BitVec(&#39;r{}_o{}&#39;.format(r, i), n) for i in range(self.num_blocks)]
-                     for r in range(self.num_rounds)]
+        self.inps = [[BitVec(&#39;r{}_i{}&#39;.format(r, i), n) for i in range(
+            self.num_blocks)] for r in range(self.num_rounds + 1)]
+        self.oups = [[BitVec(&#39;r{}_o{}&#39;.format(r, i), n) for i in range(
+            self.num_blocks)] for r in range(self.num_rounds)]
         # permutation of output of sboxes are inputs of next round
         for i in range(self.num_rounds):
             if self.num_blocks == 1:
@@ -762,9 +758,9 @@ set of included and excluded blocks</dd>
                 self.init_characteristic_solver(-1)  # search best pruning
 
     def solve_for_blocks(self, include_blocks=(), exclude_blocks=(),
-            num_rounds=0,
-            num_sols=1,
-            display_paths=True):
+                         num_rounds=0,
+                         num_sols=1,
+                         display_paths=True):
         &#34;&#34;&#34;Solves the characteristic for the specified blocks and maximizes the objective function.
 
             This method searches the characteristic for the specified blocks,
@@ -857,8 +853,8 @@ set of included and excluded blocks</dd>
                 # i.e it should not be the case where all the undiscovered blocks are
                 # inactive i.e 0
                 self.solver.add(Not(And(
-                        [self.inps[nr - 1][i] == 0 for i, v in enumerate(discovered) if not v]
-                        )))
+                    [self.inps[nr - 1][i] == 0 for i, v in enumerate(discovered) if not v]
+                )))
         return masks
 
     def search_exclusive_masks(self, prune_level=-1, repeat=1):
@@ -1235,10 +1231,10 @@ and output layers for further processing.</p></div>
     and output layers for further processing.
     &#34;&#34;&#34;
     n = self.box_size
-    self.inps = [[BitVec(&#39;r{}_i{}&#39;.format(r, i), n)
-                  for i in range(self.num_blocks)] for r in range(self.num_rounds + 1)]
-    self.oups = [[BitVec(&#39;r{}_o{}&#39;.format(r, i), n) for i in range(self.num_blocks)]
-                 for r in range(self.num_rounds)]
+    self.inps = [[BitVec(&#39;r{}_i{}&#39;.format(r, i), n) for i in range(
+        self.num_blocks)] for r in range(self.num_rounds + 1)]
+    self.oups = [[BitVec(&#39;r{}_o{}&#39;.format(r, i), n) for i in range(
+        self.num_blocks)] for r in range(self.num_rounds)]
     # permutation of output of sboxes are inputs of next round
     for i in range(self.num_rounds):
         if self.num_blocks == 1:
@@ -1386,8 +1382,8 @@ total bias for a solution.</dd>
             # i.e it should not be the case where all the undiscovered blocks are
             # inactive i.e 0
             self.solver.add(Not(And(
-                    [self.inps[nr - 1][i] == 0 for i, v in enumerate(discovered) if not v]
-                    )))
+                [self.inps[nr - 1][i] == 0 for i, v in enumerate(discovered) if not v]
+            )))
     return masks</code></pre>
 </details>
 </dd>
@@ -1473,9 +1469,9 @@ calculated bias for a solution.</dd>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def solve_for_blocks(self, include_blocks=(), exclude_blocks=(),
-        num_rounds=0,
-        num_sols=1,
-        display_paths=True):
+                     num_rounds=0,
+                     num_sols=1,
+                     display_paths=True):
     &#34;&#34;&#34;Solves the characteristic for the specified blocks and maximizes the objective function.
 
         This method searches the characteristic for the specified blocks,
@@ -1529,7 +1525,9 @@ calculated bias for a solution.</dd>
 <nav id="sidebar">
 <h1>Index</h1>
 <div class="toc">
-<ul></ul>
+<ul>
+<li><a href="#characteristic_searcher">characteristic_searcher</a></li>
+</ul>
 </div>
 <ul id="index">
 <li><h3>Super-module</h3>

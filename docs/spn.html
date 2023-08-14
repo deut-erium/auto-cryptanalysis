@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>cryptanalysis.spn API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="The `spn` module implements the Substitution-Permutation Network (SPN) encryption algorithm …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,62 +22,148 @@
 <h1 class="title">Module <code>cryptanalysis.spn</code></h1>
 </header>
 <section id="section-intro">
+<p>The <code>spn</code> module implements the Substitution-Permutation Network (SPN) encryption algorithm.</p>
+<p>SPN is a symmetric-key block cipher that operates on fixed-size blocks of plaintext and produces
+corresponding blocks of ciphertext. It consists of several rounds of substitutions and permutations
+and key additions applied to the input data.</p>
+<p>Classes:
+- SPN: Implementation of the SPN encryption algorithm.</p>
+<p>Usage:
+Initialize an instance of the <code><a title="cryptanalysis.spn.SPN" href="#cryptanalysis.spn.SPN">SPN</a></code> class with the required parameters, then use the provided methods
+to perform encryption and decryption operations.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from math import log2
+<pre><code class="python">&#34;&#34;&#34;
+The `spn` module implements the Substitution-Permutation Network (SPN) encryption algorithm.
+
+SPN is a symmetric-key block cipher that operates on fixed-size blocks of plaintext and produces
+corresponding blocks of ciphertext. It consists of several rounds of substitutions and permutations
+and key additions applied to the input data.
+
+Classes:
+- SPN: Implementation of the SPN encryption algorithm.
+
+Usage:
+Initialize an instance of the `SPN` class with the required parameters, then use the provided methods
+to perform encryption and decryption operations.
+&#34;&#34;&#34;
+from math import log2
 
 __all__ = [&#34;rotate_left&#34;, &#34;gen_pbox&#34;, &#34;SPN&#34;]
+
 
 def rotate_left(val, shift, mod):
     &#34;&#34;&#34;
     Rotate the bits of the value to the left by the shift amount.
 
+    Parameters
+    ----------
+    val : int
+        The value to be rotated.
+    shift : int
+        The number of places to shift the value to the left.
+    mod : int
+        The modulo to be applied on the result.
+
+    Returns
+    -------
+    int
+        The rotated value.
+
+    Notes
+    -----
     The function rotates the bits of the value to the left by the shift amount,
     wrapping the bits that overflow. The result is then masked by (1&lt;&lt;mod)-1
     to only keep the mod number of least significant bits.
 
-    :param val: Integer, the value to be rotated.
-    :param shift: Integer, the number of places to shift the value to the left.
-    :param mod: Integer, the modulo to be applied on the result.
-    :return: Integer, the rotated value.
     &#34;&#34;&#34;
     shift = shift % mod
     return (val &lt;&lt; shift | val &gt;&gt; (mod - shift)) &amp; ((1 &lt;&lt; mod) - 1)
 
+
 def gen_pbox(s, n):
     &#34;&#34;&#34;
-    Generate a balanced permutation box for an SPN
+    Generate a balanced permutation box for an SPN.
 
-    :param s: Integer, number of bits per S-box.
-    :param n: Integer, number of S-boxes.
-    :return: List of integers, representing the generated P-box.
+    Parameters
+    ----------
+    s : int
+        Number of bits per S-box.
+    n : int
+        Number of S-boxes.
+
+    Returns
+    -------
+    list of int
+        The generated P-box.
+
     &#34;&#34;&#34;
     return [(s * i + j) % (n * s) for j in range(s) for i in range(n)]
 
 
 class SPN:
-    def __init__(self, SBOX, PBOX, key, rounds, implementation=0):
+    &#34;&#34;&#34;
+    Class representing the SPN (Substitution-Permutation Network) encryption algorithm.
+
+    Methods
+    -------
+    perm(inp)
+        Apply the P-box permutation on the input.
+    inv_perm(inp)
+        Apply the inverse P-box permutation on the input.
+    sub(inp)
+        Apply the S-box substitution on the input.
+    inv_sub(inp)
+        Apply the inverse S-box substitution on the input.
+    int_to_list(inp)
+        Convert a len(pbox)-sized integer to a list of S-box sized integers.
+    list_to_int(lst)
+        Convert a list of S-box sized integers to a len(pbox)-sized integer.
+    expand_key(key, rounds)
+        Derive round keys deterministically from the given key.
+    _enc_last_noperm(pt)
+        Encrypt plaintext using the SPN, where the last round doesn&#39;t contain the permute operation.
+    _enc_last_withperm(ct)
+        Encrypt plaintext using the SPN, where the last round contains the permute operation.
+    _dec_last_noperm(ct)
+        Decrypt ciphertext using the SPN, where the last round doesn&#39;t contain the permute operation.
+    _dec_last_withperm(ct)
+        Decrypt ciphertext using the SPN, where the last round contains the permute operation.
+    &#34;&#34;&#34;
+
+    def __init__(self, sbox, pbox, key, rounds, implementation=0):
         &#34;&#34;&#34;
         Initialize the SPN class with the provided parameters.
 
-        :param SBOX: List of integers representing the S-box.
-        :param PBOX: List of integers representing the P-box.
-        :param key: List of integers, bytes or bytearray representing the key.
-                    LSB BLOCK_SIZE bits will be used
-        :param rounds: Integer, number of rounds for the SPN.
-        :param implementation: Integer (0 or 1), optional, default is 0.
-                               0: Last round doesn&#39;t contain the permute operation.
-                               1: Last round contains the permute operation.
+        Parameters
+        ----------
+        sbox : list of int
+            List of integers representing the S-box.
+
+        pbox : list of int
+            List of integers representing the P-box.
+
+        key : list of int or bytes or bytearray
+            List of integers, bytes, or bytearray representing the key.
+            LSB block_size bits will be used.
+
+        rounds : int
+            Number of rounds for the SPN.
+
+        implementation : int, optional
+            Implementation option. Default is 0.
+            0: Last round doesn&#39;t contain the permute operation.
+            1: Last round contains the permute operation.
         &#34;&#34;&#34;
-        self.SBOX = SBOX
-        self.PBOX = PBOX
-        self.SINV = [SBOX.index(i) for i in range(len(SBOX))]
-        self.PINV = [PBOX.index(i) for i in range(len(PBOX))]
-        self.BLOCK_SIZE = len(PBOX)
-        self.BOX_SIZE = int(log2(len(SBOX)))
-        self.NUM_SBOX = len(PBOX) // self.BOX_SIZE
+        self.sbox = sbox
+        self.pbox = pbox
+        self.sinv = [sbox.index(i) for i in range(len(sbox))]
+        self.pinv = [pbox.index(i) for i in range(len(pbox))]
+        self.block_size = len(pbox)
+        self.box_size = int(log2(len(sbox)))
+        self.num_sbox = len(pbox) // self.box_size
         self.rounds = rounds
         self.round_keys = self.expand_key(key, rounds)
         if implementation == 0:
@@ -91,133 +177,185 @@ class SPN:
         &#34;&#34;&#34;
         Apply the P-box permutation on the input.
 
-        :param inp: Integer, the input value to apply the P-box permutation on.
-        :return: Integer, the permuted value after applying the P-box.
+        Parameters
+        ----------
+        inp : int
+            The input value to apply the P-box permutation on.
+
+        Returns
+        -------
+        int
+            The permuted value after applying the P-box.
         &#34;&#34;&#34;
         ct = 0
-        for i, v in enumerate(self.PBOX):
-            ct |= (
-                inp &gt;&gt; (
-                    self.BLOCK_SIZE -
-                    1 -
-                    i) &amp; 1) &lt;&lt; (
-                self.BLOCK_SIZE -
-                1 -
-                v)
+        for i, v in enumerate(self.pbox):
+            ct |= (inp &gt;&gt; (self.block_size - 1 - i) &amp; 1) &lt;&lt; (
+                self.block_size - 1 - v)
         return ct
 
     def inv_perm(self, inp: int) -&gt; int:
         &#34;&#34;&#34;
         Apply the inverse P-box permutation on the input.
 
-        :param inp: Integer, the input value to apply the inverse P-box permutation on.
-        :return: Integer, the permuted value after applying the inverse P-box.
+        Parameters
+        ----------
+        inp : int
+            The input value to apply the inverse P-box permutation on.
+
+        Returns
+        -------
+        int
+            The permuted value after applying the inverse P-box.
         &#34;&#34;&#34;
         ct = 0
-        for i, v in enumerate(self.PINV):
-            ct |= (
-                inp &gt;&gt; (
-                    self.BLOCK_SIZE -
-                    1 -
-                    i) &amp; 1) &lt;&lt; (
-                self.BLOCK_SIZE -
-                1 -
-                v)
+        for i, v in enumerate(self.pinv):
+            ct |= (inp &gt;&gt; (self.block_size - 1 - i) &amp; 1) &lt;&lt; (
+                self.block_size - 1 - v)
         return ct
 
-    def sbox(self, inp: int) -&gt; int:
+    def sub(self, inp: int) -&gt; int:
         &#34;&#34;&#34;
         Apply the S-box substitution on the input.
 
-        :param inp: Integer, the input value to apply the S-box substitution on.
-        :return: Integer, the substituted value after applying the S-box.
+        Parameters
+        ----------
+        inp : int
+            The input value to apply the S-box substitution on.
+
+        Returns
+        -------
+        int
+            The substituted value after applying the S-box.
         &#34;&#34;&#34;
-        ct, BS = 0, self.BOX_SIZE
-        for i in range(self.NUM_SBOX):
-            ct |= self.SBOX[(inp &gt;&gt; (i * BS)) &amp; ((1 &lt;&lt; BS) - 1)] &lt;&lt; (BS * i)
+        ct, bs = 0, self.box_size
+        for i in range(self.num_sbox):
+            ct |= self.sbox[(inp &gt;&gt; (i * bs)) &amp; ((1 &lt;&lt; bs) - 1)] &lt;&lt; (bs * i)
         return ct
 
-    def inv_sbox(self, inp: int) -&gt; int:
+    def inv_sub(self, inp: int) -&gt; int:
         &#34;&#34;&#34;
         Apply the inverse S-box substitution on the input.
 
-        :param inp: Integer, the input value to apply the inverse S-box substitution on.
-        :return: Integer, the substituted value after applying the inverse S-box.
+        Parameters
+        ----------
+        inp : int
+            The input value to apply the inverse S-box substitution on.
+
+        Returns
+        -------
+        int
+            The substituted value after applying the inverse S-box.
         &#34;&#34;&#34;
-        ct, BS = 0, self.BOX_SIZE
-        for i in range(self.NUM_SBOX):
-            ct |= self.SINV[(inp &gt;&gt; (i * BS)) &amp; ((1 &lt;&lt; BS) - 1)] &lt;&lt; (BS * i)
+        ct, bs = 0, self.box_size
+        for i in range(self.num_sbox):
+            ct |= self.sinv[(inp &gt;&gt; (i * bs)) &amp; ((1 &lt;&lt; bs) - 1)] &lt;&lt; (bs * i)
         return ct
 
     def int_to_list(self, inp):
         &#34;&#34;&#34;
-        Convert a len(PBOX)-sized integer to a list of S-box sized integers.
+        Convert a len(pbox)-sized integer to a list of S-box sized integers.
 
-        :param inp: Integer, representing a len(PBOX)-sized input.
-        :return: List of integers, each representing an S-box sized input.
+        Parameters
+        ----------
+        inp : int
+            An integer representing a len(pbox)-sized input.
+
+        Returns
+        -------
+        list of int
+            A list of integers, each representing an S-box sized input.
         &#34;&#34;&#34;
-        BS = self.BOX_SIZE
-        return [(inp &gt;&gt; (i * BS)) &amp; ((1 &lt;&lt; BS) - 1)
-                for i in range(self.NUM_SBOX - 1, -1, -1)]
+        bs = self.box_size
+        return [(inp &gt;&gt; (i * bs)) &amp; ((1 &lt;&lt; bs) - 1)
+                for i in range(self.num_sbox - 1, -1, -1)]
 
     def list_to_int(self, lst):
         &#34;&#34;&#34;
-        Convert a list of S-box sized integers to a len(PBOX)-sized integer.
+        Convert a list of S-box sized integers to a len(pbox)-sized integer.
 
-        :param lst: List of integers, each representing an S-box sized input.
-        :return: Integer, representing the combined input as a len(PBOX)-sized integer.
+        Parameters
+        ----------
+        lst : list of int
+            A list of integers, each representing an S-box sized input.
+
+        Returns
+        -------
+        int
+            An integer representing the combined input as a len(pbox)-sized integer.
         &#34;&#34;&#34;
         res = 0
         for i, v in enumerate(lst[::-1]):
-            res |= v &lt;&lt; (i * self.BOX_SIZE)
+            res |= v &lt;&lt; (i * self.box_size)
         return res
 
     def expand_key(self, key, rounds):
         &#34;&#34;&#34;
         Derive round keys deterministically from the given key.
 
-        :param key: List of integers, bytes, or bytearray representing the key.
-        :param rounds: Integer, number of rounds for the SPN.
-        :return: List of integers, representing the derived round keys.
+        Parameters
+        ----------
+        key : list of int or bytes or bytearray
+            A list of integers, bytes, or bytearray representing the key.
+        rounds : int
+            The number of rounds for the SPN.
+
+        Returns
+        -------
+        list of int
+            A list of integers representing the derived round keys.
         &#34;&#34;&#34;
         if isinstance(key, list):
             key = self.list_to_int(key)
         elif isinstance(key, (bytes, bytearray)):
             key = int.from_bytes(key, &#39;big&#39;)
-        block_mask = (1 &lt;&lt; self.BLOCK_SIZE) - 1
+        block_mask = (1 &lt;&lt; self.block_size) - 1
         key = key &amp; block_mask
         keys = [key]
         for _ in range(rounds):
-            keys.append(self.sbox(rotate_left(
-                keys[-1], self.BOX_SIZE + 1, self.BLOCK_SIZE)))
+            keys.append(self.sub(rotate_left(
+                keys[-1], self.box_size + 1, self.block_size)))
         return keys
 
     def _enc_last_noperm(self, pt: int) -&gt; int:
         &#34;&#34;&#34;
         Encrypt plaintext using the SPN, where the last round doesn&#39;t contain the permute operation.
 
-        :param pt: Integer, plaintext input to be encrypted.
-        :return: Integer, ciphertext after encryption.
+        Parameters
+        ----------
+        pt : int
+            The plaintext input to be encrypted.
+
+        Returns
+        -------
+        int
+            The ciphertext after encryption.
         &#34;&#34;&#34;
         ct = pt ^ self.round_keys[0]
         for round_key in self.round_keys[1:-1]:
-            ct = self.sbox(ct)
+            ct = self.sub(ct)
             ct = self.perm(ct)
             ct ^= round_key
-        ct = self.sbox(ct)
+        ct = self.sub(ct)
         return ct ^ self.round_keys[-1]
 
     def _enc_last_withperm(self, ct: int) -&gt; int:
         &#34;&#34;&#34;
         Encrypt plaintext using the SPN, where the last round contains the permute operation.
-        Note, the last permutation provides no additional security
+        Note, the last permutation provides no additional security.
 
-        :param pt: Integer, plaintext input to be encrypted.
-        :return: Integer, ciphertext after encryption.
+        Parameters
+        ----------
+        ct : int
+            The plaintext input to be encrypted.
+
+        Returns
+        -------
+        int
+            The ciphertext after encryption.
         &#34;&#34;&#34;
         for round_key in self.round_keys[:-1]:
             ct ^= round_key
-            ct = self.sbox(ct)
+            ct = self.sub(ct)
             ct = self.perm(ct)
         return ct ^ self.round_keys[-1]
 
@@ -225,28 +363,42 @@ class SPN:
         &#34;&#34;&#34;
         Decrypt ciphertext using the SPN, where the last round doesn&#39;t contain the permute operation.
 
-        :param ct: Integer, ciphertext input to be decrypted.
-        :return: Integer, plaintext after decryption.
+        Parameters
+        ----------
+        ct : int
+            The ciphertext input to be decrypted.
+
+        Returns
+        -------
+        int
+            The plaintext after decryption.
         &#34;&#34;&#34;
         ct = ct ^ self.round_keys[-1]
-        ct = self.inv_sbox(ct)
+        ct = self.inv_sub(ct)
         for rk in self.round_keys[-2:0:-1]:
             ct ^= rk
             ct = self.inv_perm(ct)
-            ct = self.inv_sbox(ct)
+            ct = self.inv_sub(ct)
         return ct ^ self.round_keys[0]
 
     def _dec_last_withperm(self, ct: int) -&gt; int:
         &#34;&#34;&#34;
         Decrypt ciphertext using the SPN, where the last round contains the permute operation.
 
-        :param ct: Integer, ciphertext input to be decrypted.
-        :return: Integer, plaintext after decryption.
+        Parameters
+        ----------
+        ct : int
+            The ciphertext input to be decrypted.
+
+        Returns
+        -------
+        int
+            The plaintext after decryption.
         &#34;&#34;&#34;
         ct = ct ^ self.round_keys[-1]
         for rk in self.round_keys[-2::-1]:
             ct = self.inv_perm(ct)
-            ct = self.inv_sbox(ct)
+            ct = self.inv_sub(ct)
             ct ^= rk
         return ct</code></pre>
 </details>
@@ -262,21 +414,39 @@ class SPN:
 <span>def <span class="ident">gen_pbox</span></span>(<span>s, n)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Generate a balanced permutation box for an SPN</p>
-<p>:param s: Integer, number of bits per S-box.
-:param n: Integer, number of S-boxes.
-:return: List of integers, representing the generated P-box.</p></div>
+<div class="desc"><p>Generate a balanced permutation box for an SPN.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>s</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of bits per S-box.</dd>
+<dt><strong><code>n</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of S-boxes.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code> of <code>int</code></dt>
+<dd>The generated P-box.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def gen_pbox(s, n):
     &#34;&#34;&#34;
-    Generate a balanced permutation box for an SPN
+    Generate a balanced permutation box for an SPN.
 
-    :param s: Integer, number of bits per S-box.
-    :param n: Integer, number of S-boxes.
-    :return: List of integers, representing the generated P-box.
+    Parameters
+    ----------
+    s : int
+        Number of bits per S-box.
+    n : int
+        Number of S-boxes.
+
+    Returns
+    -------
+    list of int
+        The generated P-box.
+
     &#34;&#34;&#34;
     return [(s * i + j) % (n * s) for j in range(s) for i in range(n)]</code></pre>
 </details>
@@ -286,13 +456,24 @@ class SPN:
 </code></dt>
 <dd>
 <div class="desc"><p>Rotate the bits of the value to the left by the shift amount.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>val</code></strong> :&ensp;<code>int</code></dt>
+<dd>The value to be rotated.</dd>
+<dt><strong><code>shift</code></strong> :&ensp;<code>int</code></dt>
+<dd>The number of places to shift the value to the left.</dd>
+<dt><strong><code>mod</code></strong> :&ensp;<code>int</code></dt>
+<dd>The modulo to be applied on the result.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>The rotated value.</dd>
+</dl>
+<h2 id="notes">Notes</h2>
 <p>The function rotates the bits of the value to the left by the shift amount,
 wrapping the bits that overflow. The result is then masked by (1&lt;&lt;mod)-1
-to only keep the mod number of least significant bits.</p>
-<p>:param val: Integer, the value to be rotated.
-:param shift: Integer, the number of places to shift the value to the left.
-:param mod: Integer, the modulo to be applied on the result.
-:return: Integer, the rotated value.</p></div>
+to only keep the mod number of least significant bits.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -301,14 +482,26 @@ to only keep the mod number of least significant bits.</p>
     &#34;&#34;&#34;
     Rotate the bits of the value to the left by the shift amount.
 
+    Parameters
+    ----------
+    val : int
+        The value to be rotated.
+    shift : int
+        The number of places to shift the value to the left.
+    mod : int
+        The modulo to be applied on the result.
+
+    Returns
+    -------
+    int
+        The rotated value.
+
+    Notes
+    -----
     The function rotates the bits of the value to the left by the shift amount,
     wrapping the bits that overflow. The result is then masked by (1&lt;&lt;mod)-1
     to only keep the mod number of least significant bits.
 
-    :param val: Integer, the value to be rotated.
-    :param shift: Integer, the number of places to shift the value to the left.
-    :param mod: Integer, the modulo to be applied on the result.
-    :return: Integer, the rotated value.
     &#34;&#34;&#34;
     shift = shift % mod
     return (val &lt;&lt; shift | val &gt;&gt; (mod - shift)) &amp; ((1 &lt;&lt; mod) - 1)</code></pre>
@@ -321,43 +514,115 @@ to only keep the mod number of least significant bits.</p>
 <dl>
 <dt id="cryptanalysis.spn.SPN"><code class="flex name class">
 <span>class <span class="ident">SPN</span></span>
-<span>(</span><span>SBOX, PBOX, key, rounds, implementation=0)</span>
+<span>(</span><span>sbox, pbox, key, rounds, implementation=0)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Initialize the SPN class with the provided parameters.</p>
-<p>:param SBOX: List of integers representing the S-box.
-:param PBOX: List of integers representing the P-box.
-:param key: List of integers, bytes or bytearray representing the key.
-LSB BLOCK_SIZE bits will be used
-:param rounds: Integer, number of rounds for the SPN.
-:param implementation: Integer (0 or 1), optional, default is 0.
+<div class="desc"><p>Class representing the SPN (Substitution-Permutation Network) encryption algorithm.</p>
+<h2 id="methods">Methods</h2>
+<p>perm(inp)
+Apply the P-box permutation on the input.
+inv_perm(inp)
+Apply the inverse P-box permutation on the input.
+sub(inp)
+Apply the S-box substitution on the input.
+inv_sub(inp)
+Apply the inverse S-box substitution on the input.
+int_to_list(inp)
+Convert a len(pbox)-sized integer to a list of S-box sized integers.
+list_to_int(lst)
+Convert a list of S-box sized integers to a len(pbox)-sized integer.
+expand_key(key, rounds)
+Derive round keys deterministically from the given key.
+_enc_last_noperm(pt)
+Encrypt plaintext using the SPN, where the last round doesn't contain the permute operation.
+_enc_last_withperm(ct)
+Encrypt plaintext using the SPN, where the last round contains the permute operation.
+_dec_last_noperm(ct)
+Decrypt ciphertext using the SPN, where the last round doesn't contain the permute operation.
+_dec_last_withperm(ct)
+Decrypt ciphertext using the SPN, where the last round contains the permute operation.</p>
+<p>Initialize the SPN class with the provided parameters.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>sbox</code></strong> :&ensp;<code>list</code> of <code>int</code></dt>
+<dd>List of integers representing the S-box.</dd>
+<dt><strong><code>pbox</code></strong> :&ensp;<code>list</code> of <code>int</code></dt>
+<dd>List of integers representing the P-box.</dd>
+<dt><strong><code>key</code></strong> :&ensp;<code>list</code> of <code>int</code> or <code>bytes</code> or <code>bytearray</code></dt>
+<dd>List of integers, bytes, or bytearray representing the key.
+LSB block_size bits will be used.</dd>
+<dt><strong><code>rounds</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of rounds for the SPN.</dd>
+<dt><strong><code>implementation</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>Implementation option. Default is 0.
 0: Last round doesn't contain the permute operation.
-1: Last round contains the permute operation.</p></div>
+1: Last round contains the permute operation.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class SPN:
-    def __init__(self, SBOX, PBOX, key, rounds, implementation=0):
+    &#34;&#34;&#34;
+    Class representing the SPN (Substitution-Permutation Network) encryption algorithm.
+
+    Methods
+    -------
+    perm(inp)
+        Apply the P-box permutation on the input.
+    inv_perm(inp)
+        Apply the inverse P-box permutation on the input.
+    sub(inp)
+        Apply the S-box substitution on the input.
+    inv_sub(inp)
+        Apply the inverse S-box substitution on the input.
+    int_to_list(inp)
+        Convert a len(pbox)-sized integer to a list of S-box sized integers.
+    list_to_int(lst)
+        Convert a list of S-box sized integers to a len(pbox)-sized integer.
+    expand_key(key, rounds)
+        Derive round keys deterministically from the given key.
+    _enc_last_noperm(pt)
+        Encrypt plaintext using the SPN, where the last round doesn&#39;t contain the permute operation.
+    _enc_last_withperm(ct)
+        Encrypt plaintext using the SPN, where the last round contains the permute operation.
+    _dec_last_noperm(ct)
+        Decrypt ciphertext using the SPN, where the last round doesn&#39;t contain the permute operation.
+    _dec_last_withperm(ct)
+        Decrypt ciphertext using the SPN, where the last round contains the permute operation.
+    &#34;&#34;&#34;
+
+    def __init__(self, sbox, pbox, key, rounds, implementation=0):
         &#34;&#34;&#34;
         Initialize the SPN class with the provided parameters.
 
-        :param SBOX: List of integers representing the S-box.
-        :param PBOX: List of integers representing the P-box.
-        :param key: List of integers, bytes or bytearray representing the key.
-                    LSB BLOCK_SIZE bits will be used
-        :param rounds: Integer, number of rounds for the SPN.
-        :param implementation: Integer (0 or 1), optional, default is 0.
-                               0: Last round doesn&#39;t contain the permute operation.
-                               1: Last round contains the permute operation.
+        Parameters
+        ----------
+        sbox : list of int
+            List of integers representing the S-box.
+
+        pbox : list of int
+            List of integers representing the P-box.
+
+        key : list of int or bytes or bytearray
+            List of integers, bytes, or bytearray representing the key.
+            LSB block_size bits will be used.
+
+        rounds : int
+            Number of rounds for the SPN.
+
+        implementation : int, optional
+            Implementation option. Default is 0.
+            0: Last round doesn&#39;t contain the permute operation.
+            1: Last round contains the permute operation.
         &#34;&#34;&#34;
-        self.SBOX = SBOX
-        self.PBOX = PBOX
-        self.SINV = [SBOX.index(i) for i in range(len(SBOX))]
-        self.PINV = [PBOX.index(i) for i in range(len(PBOX))]
-        self.BLOCK_SIZE = len(PBOX)
-        self.BOX_SIZE = int(log2(len(SBOX)))
-        self.NUM_SBOX = len(PBOX) // self.BOX_SIZE
+        self.sbox = sbox
+        self.pbox = pbox
+        self.sinv = [sbox.index(i) for i in range(len(sbox))]
+        self.pinv = [pbox.index(i) for i in range(len(pbox))]
+        self.block_size = len(pbox)
+        self.box_size = int(log2(len(sbox)))
+        self.num_sbox = len(pbox) // self.box_size
         self.rounds = rounds
         self.round_keys = self.expand_key(key, rounds)
         if implementation == 0:
@@ -371,133 +636,185 @@ LSB BLOCK_SIZE bits will be used
         &#34;&#34;&#34;
         Apply the P-box permutation on the input.
 
-        :param inp: Integer, the input value to apply the P-box permutation on.
-        :return: Integer, the permuted value after applying the P-box.
+        Parameters
+        ----------
+        inp : int
+            The input value to apply the P-box permutation on.
+
+        Returns
+        -------
+        int
+            The permuted value after applying the P-box.
         &#34;&#34;&#34;
         ct = 0
-        for i, v in enumerate(self.PBOX):
-            ct |= (
-                inp &gt;&gt; (
-                    self.BLOCK_SIZE -
-                    1 -
-                    i) &amp; 1) &lt;&lt; (
-                self.BLOCK_SIZE -
-                1 -
-                v)
+        for i, v in enumerate(self.pbox):
+            ct |= (inp &gt;&gt; (self.block_size - 1 - i) &amp; 1) &lt;&lt; (
+                self.block_size - 1 - v)
         return ct
 
     def inv_perm(self, inp: int) -&gt; int:
         &#34;&#34;&#34;
         Apply the inverse P-box permutation on the input.
 
-        :param inp: Integer, the input value to apply the inverse P-box permutation on.
-        :return: Integer, the permuted value after applying the inverse P-box.
+        Parameters
+        ----------
+        inp : int
+            The input value to apply the inverse P-box permutation on.
+
+        Returns
+        -------
+        int
+            The permuted value after applying the inverse P-box.
         &#34;&#34;&#34;
         ct = 0
-        for i, v in enumerate(self.PINV):
-            ct |= (
-                inp &gt;&gt; (
-                    self.BLOCK_SIZE -
-                    1 -
-                    i) &amp; 1) &lt;&lt; (
-                self.BLOCK_SIZE -
-                1 -
-                v)
+        for i, v in enumerate(self.pinv):
+            ct |= (inp &gt;&gt; (self.block_size - 1 - i) &amp; 1) &lt;&lt; (
+                self.block_size - 1 - v)
         return ct
 
-    def sbox(self, inp: int) -&gt; int:
+    def sub(self, inp: int) -&gt; int:
         &#34;&#34;&#34;
         Apply the S-box substitution on the input.
 
-        :param inp: Integer, the input value to apply the S-box substitution on.
-        :return: Integer, the substituted value after applying the S-box.
+        Parameters
+        ----------
+        inp : int
+            The input value to apply the S-box substitution on.
+
+        Returns
+        -------
+        int
+            The substituted value after applying the S-box.
         &#34;&#34;&#34;
-        ct, BS = 0, self.BOX_SIZE
-        for i in range(self.NUM_SBOX):
-            ct |= self.SBOX[(inp &gt;&gt; (i * BS)) &amp; ((1 &lt;&lt; BS) - 1)] &lt;&lt; (BS * i)
+        ct, bs = 0, self.box_size
+        for i in range(self.num_sbox):
+            ct |= self.sbox[(inp &gt;&gt; (i * bs)) &amp; ((1 &lt;&lt; bs) - 1)] &lt;&lt; (bs * i)
         return ct
 
-    def inv_sbox(self, inp: int) -&gt; int:
+    def inv_sub(self, inp: int) -&gt; int:
         &#34;&#34;&#34;
         Apply the inverse S-box substitution on the input.
 
-        :param inp: Integer, the input value to apply the inverse S-box substitution on.
-        :return: Integer, the substituted value after applying the inverse S-box.
+        Parameters
+        ----------
+        inp : int
+            The input value to apply the inverse S-box substitution on.
+
+        Returns
+        -------
+        int
+            The substituted value after applying the inverse S-box.
         &#34;&#34;&#34;
-        ct, BS = 0, self.BOX_SIZE
-        for i in range(self.NUM_SBOX):
-            ct |= self.SINV[(inp &gt;&gt; (i * BS)) &amp; ((1 &lt;&lt; BS) - 1)] &lt;&lt; (BS * i)
+        ct, bs = 0, self.box_size
+        for i in range(self.num_sbox):
+            ct |= self.sinv[(inp &gt;&gt; (i * bs)) &amp; ((1 &lt;&lt; bs) - 1)] &lt;&lt; (bs * i)
         return ct
 
     def int_to_list(self, inp):
         &#34;&#34;&#34;
-        Convert a len(PBOX)-sized integer to a list of S-box sized integers.
+        Convert a len(pbox)-sized integer to a list of S-box sized integers.
 
-        :param inp: Integer, representing a len(PBOX)-sized input.
-        :return: List of integers, each representing an S-box sized input.
+        Parameters
+        ----------
+        inp : int
+            An integer representing a len(pbox)-sized input.
+
+        Returns
+        -------
+        list of int
+            A list of integers, each representing an S-box sized input.
         &#34;&#34;&#34;
-        BS = self.BOX_SIZE
-        return [(inp &gt;&gt; (i * BS)) &amp; ((1 &lt;&lt; BS) - 1)
-                for i in range(self.NUM_SBOX - 1, -1, -1)]
+        bs = self.box_size
+        return [(inp &gt;&gt; (i * bs)) &amp; ((1 &lt;&lt; bs) - 1)
+                for i in range(self.num_sbox - 1, -1, -1)]
 
     def list_to_int(self, lst):
         &#34;&#34;&#34;
-        Convert a list of S-box sized integers to a len(PBOX)-sized integer.
+        Convert a list of S-box sized integers to a len(pbox)-sized integer.
 
-        :param lst: List of integers, each representing an S-box sized input.
-        :return: Integer, representing the combined input as a len(PBOX)-sized integer.
+        Parameters
+        ----------
+        lst : list of int
+            A list of integers, each representing an S-box sized input.
+
+        Returns
+        -------
+        int
+            An integer representing the combined input as a len(pbox)-sized integer.
         &#34;&#34;&#34;
         res = 0
         for i, v in enumerate(lst[::-1]):
-            res |= v &lt;&lt; (i * self.BOX_SIZE)
+            res |= v &lt;&lt; (i * self.box_size)
         return res
 
     def expand_key(self, key, rounds):
         &#34;&#34;&#34;
         Derive round keys deterministically from the given key.
 
-        :param key: List of integers, bytes, or bytearray representing the key.
-        :param rounds: Integer, number of rounds for the SPN.
-        :return: List of integers, representing the derived round keys.
+        Parameters
+        ----------
+        key : list of int or bytes or bytearray
+            A list of integers, bytes, or bytearray representing the key.
+        rounds : int
+            The number of rounds for the SPN.
+
+        Returns
+        -------
+        list of int
+            A list of integers representing the derived round keys.
         &#34;&#34;&#34;
         if isinstance(key, list):
             key = self.list_to_int(key)
         elif isinstance(key, (bytes, bytearray)):
             key = int.from_bytes(key, &#39;big&#39;)
-        block_mask = (1 &lt;&lt; self.BLOCK_SIZE) - 1
+        block_mask = (1 &lt;&lt; self.block_size) - 1
         key = key &amp; block_mask
         keys = [key]
         for _ in range(rounds):
-            keys.append(self.sbox(rotate_left(
-                keys[-1], self.BOX_SIZE + 1, self.BLOCK_SIZE)))
+            keys.append(self.sub(rotate_left(
+                keys[-1], self.box_size + 1, self.block_size)))
         return keys
 
     def _enc_last_noperm(self, pt: int) -&gt; int:
         &#34;&#34;&#34;
         Encrypt plaintext using the SPN, where the last round doesn&#39;t contain the permute operation.
 
-        :param pt: Integer, plaintext input to be encrypted.
-        :return: Integer, ciphertext after encryption.
+        Parameters
+        ----------
+        pt : int
+            The plaintext input to be encrypted.
+
+        Returns
+        -------
+        int
+            The ciphertext after encryption.
         &#34;&#34;&#34;
         ct = pt ^ self.round_keys[0]
         for round_key in self.round_keys[1:-1]:
-            ct = self.sbox(ct)
+            ct = self.sub(ct)
             ct = self.perm(ct)
             ct ^= round_key
-        ct = self.sbox(ct)
+        ct = self.sub(ct)
         return ct ^ self.round_keys[-1]
 
     def _enc_last_withperm(self, ct: int) -&gt; int:
         &#34;&#34;&#34;
         Encrypt plaintext using the SPN, where the last round contains the permute operation.
-        Note, the last permutation provides no additional security
+        Note, the last permutation provides no additional security.
 
-        :param pt: Integer, plaintext input to be encrypted.
-        :return: Integer, ciphertext after encryption.
+        Parameters
+        ----------
+        ct : int
+            The plaintext input to be encrypted.
+
+        Returns
+        -------
+        int
+            The ciphertext after encryption.
         &#34;&#34;&#34;
         for round_key in self.round_keys[:-1]:
             ct ^= round_key
-            ct = self.sbox(ct)
+            ct = self.sub(ct)
             ct = self.perm(ct)
         return ct ^ self.round_keys[-1]
 
@@ -505,28 +822,42 @@ LSB BLOCK_SIZE bits will be used
         &#34;&#34;&#34;
         Decrypt ciphertext using the SPN, where the last round doesn&#39;t contain the permute operation.
 
-        :param ct: Integer, ciphertext input to be decrypted.
-        :return: Integer, plaintext after decryption.
+        Parameters
+        ----------
+        ct : int
+            The ciphertext input to be decrypted.
+
+        Returns
+        -------
+        int
+            The plaintext after decryption.
         &#34;&#34;&#34;
         ct = ct ^ self.round_keys[-1]
-        ct = self.inv_sbox(ct)
+        ct = self.inv_sub(ct)
         for rk in self.round_keys[-2:0:-1]:
             ct ^= rk
             ct = self.inv_perm(ct)
-            ct = self.inv_sbox(ct)
+            ct = self.inv_sub(ct)
         return ct ^ self.round_keys[0]
 
     def _dec_last_withperm(self, ct: int) -&gt; int:
         &#34;&#34;&#34;
         Decrypt ciphertext using the SPN, where the last round contains the permute operation.
 
-        :param ct: Integer, ciphertext input to be decrypted.
-        :return: Integer, plaintext after decryption.
+        Parameters
+        ----------
+        ct : int
+            The ciphertext input to be decrypted.
+
+        Returns
+        -------
+        int
+            The plaintext after decryption.
         &#34;&#34;&#34;
         ct = ct ^ self.round_keys[-1]
         for rk in self.round_keys[-2::-1]:
             ct = self.inv_perm(ct)
-            ct = self.inv_sbox(ct)
+            ct = self.inv_sub(ct)
             ct ^= rk
         return ct</code></pre>
 </details>
@@ -541,9 +872,18 @@ LSB BLOCK_SIZE bits will be used
 </code></dt>
 <dd>
 <div class="desc"><p>Derive round keys deterministically from the given key.</p>
-<p>:param key: List of integers, bytes, or bytearray representing the key.
-:param rounds: Integer, number of rounds for the SPN.
-:return: List of integers, representing the derived round keys.</p></div>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>key</code></strong> :&ensp;<code>list</code> of <code>int</code> or <code>bytes</code> or <code>bytearray</code></dt>
+<dd>A list of integers, bytes, or bytearray representing the key.</dd>
+<dt><strong><code>rounds</code></strong> :&ensp;<code>int</code></dt>
+<dd>The number of rounds for the SPN.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code> of <code>int</code></dt>
+<dd>A list of integers representing the derived round keys.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -552,20 +892,28 @@ LSB BLOCK_SIZE bits will be used
     &#34;&#34;&#34;
     Derive round keys deterministically from the given key.
 
-    :param key: List of integers, bytes, or bytearray representing the key.
-    :param rounds: Integer, number of rounds for the SPN.
-    :return: List of integers, representing the derived round keys.
+    Parameters
+    ----------
+    key : list of int or bytes or bytearray
+        A list of integers, bytes, or bytearray representing the key.
+    rounds : int
+        The number of rounds for the SPN.
+
+    Returns
+    -------
+    list of int
+        A list of integers representing the derived round keys.
     &#34;&#34;&#34;
     if isinstance(key, list):
         key = self.list_to_int(key)
     elif isinstance(key, (bytes, bytearray)):
         key = int.from_bytes(key, &#39;big&#39;)
-    block_mask = (1 &lt;&lt; self.BLOCK_SIZE) - 1
+    block_mask = (1 &lt;&lt; self.block_size) - 1
     key = key &amp; block_mask
     keys = [key]
     for _ in range(rounds):
-        keys.append(self.sbox(rotate_left(
-            keys[-1], self.BOX_SIZE + 1, self.BLOCK_SIZE)))
+        keys.append(self.sub(rotate_left(
+            keys[-1], self.box_size + 1, self.block_size)))
     return keys</code></pre>
 </details>
 </dd>
@@ -573,23 +921,38 @@ LSB BLOCK_SIZE bits will be used
 <span>def <span class="ident">int_to_list</span></span>(<span>self, inp)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Convert a len(PBOX)-sized integer to a list of S-box sized integers.</p>
-<p>:param inp: Integer, representing a len(PBOX)-sized input.
-:return: List of integers, each representing an S-box sized input.</p></div>
+<div class="desc"><p>Convert a len(pbox)-sized integer to a list of S-box sized integers.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>inp</code></strong> :&ensp;<code>int</code></dt>
+<dd>An integer representing a len(pbox)-sized input.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code> of <code>int</code></dt>
+<dd>A list of integers, each representing an S-box sized input.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def int_to_list(self, inp):
     &#34;&#34;&#34;
-    Convert a len(PBOX)-sized integer to a list of S-box sized integers.
+    Convert a len(pbox)-sized integer to a list of S-box sized integers.
 
-    :param inp: Integer, representing a len(PBOX)-sized input.
-    :return: List of integers, each representing an S-box sized input.
+    Parameters
+    ----------
+    inp : int
+        An integer representing a len(pbox)-sized input.
+
+    Returns
+    -------
+    list of int
+        A list of integers, each representing an S-box sized input.
     &#34;&#34;&#34;
-    BS = self.BOX_SIZE
-    return [(inp &gt;&gt; (i * BS)) &amp; ((1 &lt;&lt; BS) - 1)
-            for i in range(self.NUM_SBOX - 1, -1, -1)]</code></pre>
+    bs = self.box_size
+    return [(inp &gt;&gt; (i * bs)) &amp; ((1 &lt;&lt; bs) - 1)
+            for i in range(self.num_sbox - 1, -1, -1)]</code></pre>
 </details>
 </dd>
 <dt id="cryptanalysis.spn.SPN.inv_perm"><code class="name flex">
@@ -597,8 +960,16 @@ LSB BLOCK_SIZE bits will be used
 </code></dt>
 <dd>
 <div class="desc"><p>Apply the inverse P-box permutation on the input.</p>
-<p>:param inp: Integer, the input value to apply the inverse P-box permutation on.
-:return: Integer, the permuted value after applying the inverse P-box.</p></div>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>inp</code></strong> :&ensp;<code>int</code></dt>
+<dd>The input value to apply the inverse P-box permutation on.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>The permuted value after applying the inverse P-box.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -607,43 +978,59 @@ LSB BLOCK_SIZE bits will be used
     &#34;&#34;&#34;
     Apply the inverse P-box permutation on the input.
 
-    :param inp: Integer, the input value to apply the inverse P-box permutation on.
-    :return: Integer, the permuted value after applying the inverse P-box.
+    Parameters
+    ----------
+    inp : int
+        The input value to apply the inverse P-box permutation on.
+
+    Returns
+    -------
+    int
+        The permuted value after applying the inverse P-box.
     &#34;&#34;&#34;
     ct = 0
-    for i, v in enumerate(self.PINV):
-        ct |= (
-            inp &gt;&gt; (
-                self.BLOCK_SIZE -
-                1 -
-                i) &amp; 1) &lt;&lt; (
-            self.BLOCK_SIZE -
-            1 -
-            v)
+    for i, v in enumerate(self.pinv):
+        ct |= (inp &gt;&gt; (self.block_size - 1 - i) &amp; 1) &lt;&lt; (
+            self.block_size - 1 - v)
     return ct</code></pre>
 </details>
 </dd>
-<dt id="cryptanalysis.spn.SPN.inv_sbox"><code class="name flex">
-<span>def <span class="ident">inv_sbox</span></span>(<span>self, inp: int) ‑> int</span>
+<dt id="cryptanalysis.spn.SPN.inv_sub"><code class="name flex">
+<span>def <span class="ident">inv_sub</span></span>(<span>self, inp: int) ‑> int</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Apply the inverse S-box substitution on the input.</p>
-<p>:param inp: Integer, the input value to apply the inverse S-box substitution on.
-:return: Integer, the substituted value after applying the inverse S-box.</p></div>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>inp</code></strong> :&ensp;<code>int</code></dt>
+<dd>The input value to apply the inverse S-box substitution on.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>The substituted value after applying the inverse S-box.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def inv_sbox(self, inp: int) -&gt; int:
+<pre><code class="python">def inv_sub(self, inp: int) -&gt; int:
     &#34;&#34;&#34;
     Apply the inverse S-box substitution on the input.
 
-    :param inp: Integer, the input value to apply the inverse S-box substitution on.
-    :return: Integer, the substituted value after applying the inverse S-box.
+    Parameters
+    ----------
+    inp : int
+        The input value to apply the inverse S-box substitution on.
+
+    Returns
+    -------
+    int
+        The substituted value after applying the inverse S-box.
     &#34;&#34;&#34;
-    ct, BS = 0, self.BOX_SIZE
-    for i in range(self.NUM_SBOX):
-        ct |= self.SINV[(inp &gt;&gt; (i * BS)) &amp; ((1 &lt;&lt; BS) - 1)] &lt;&lt; (BS * i)
+    ct, bs = 0, self.box_size
+    for i in range(self.num_sbox):
+        ct |= self.sinv[(inp &gt;&gt; (i * bs)) &amp; ((1 &lt;&lt; bs) - 1)] &lt;&lt; (bs * i)
     return ct</code></pre>
 </details>
 </dd>
@@ -651,23 +1038,38 @@ LSB BLOCK_SIZE bits will be used
 <span>def <span class="ident">list_to_int</span></span>(<span>self, lst)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Convert a list of S-box sized integers to a len(PBOX)-sized integer.</p>
-<p>:param lst: List of integers, each representing an S-box sized input.
-:return: Integer, representing the combined input as a len(PBOX)-sized integer.</p></div>
+<div class="desc"><p>Convert a list of S-box sized integers to a len(pbox)-sized integer.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>lst</code></strong> :&ensp;<code>list</code> of <code>int</code></dt>
+<dd>A list of integers, each representing an S-box sized input.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>An integer representing the combined input as a len(pbox)-sized integer.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def list_to_int(self, lst):
     &#34;&#34;&#34;
-    Convert a list of S-box sized integers to a len(PBOX)-sized integer.
+    Convert a list of S-box sized integers to a len(pbox)-sized integer.
 
-    :param lst: List of integers, each representing an S-box sized input.
-    :return: Integer, representing the combined input as a len(PBOX)-sized integer.
+    Parameters
+    ----------
+    lst : list of int
+        A list of integers, each representing an S-box sized input.
+
+    Returns
+    -------
+    int
+        An integer representing the combined input as a len(pbox)-sized integer.
     &#34;&#34;&#34;
     res = 0
     for i, v in enumerate(lst[::-1]):
-        res |= v &lt;&lt; (i * self.BOX_SIZE)
+        res |= v &lt;&lt; (i * self.box_size)
     return res</code></pre>
 </details>
 </dd>
@@ -676,8 +1078,16 @@ LSB BLOCK_SIZE bits will be used
 </code></dt>
 <dd>
 <div class="desc"><p>Apply the P-box permutation on the input.</p>
-<p>:param inp: Integer, the input value to apply the P-box permutation on.
-:return: Integer, the permuted value after applying the P-box.</p></div>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>inp</code></strong> :&ensp;<code>int</code></dt>
+<dd>The input value to apply the P-box permutation on.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>The permuted value after applying the P-box.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -686,43 +1096,59 @@ LSB BLOCK_SIZE bits will be used
     &#34;&#34;&#34;
     Apply the P-box permutation on the input.
 
-    :param inp: Integer, the input value to apply the P-box permutation on.
-    :return: Integer, the permuted value after applying the P-box.
+    Parameters
+    ----------
+    inp : int
+        The input value to apply the P-box permutation on.
+
+    Returns
+    -------
+    int
+        The permuted value after applying the P-box.
     &#34;&#34;&#34;
     ct = 0
-    for i, v in enumerate(self.PBOX):
-        ct |= (
-            inp &gt;&gt; (
-                self.BLOCK_SIZE -
-                1 -
-                i) &amp; 1) &lt;&lt; (
-            self.BLOCK_SIZE -
-            1 -
-            v)
+    for i, v in enumerate(self.pbox):
+        ct |= (inp &gt;&gt; (self.block_size - 1 - i) &amp; 1) &lt;&lt; (
+            self.block_size - 1 - v)
     return ct</code></pre>
 </details>
 </dd>
-<dt id="cryptanalysis.spn.SPN.sbox"><code class="name flex">
-<span>def <span class="ident">sbox</span></span>(<span>self, inp: int) ‑> int</span>
+<dt id="cryptanalysis.spn.SPN.sub"><code class="name flex">
+<span>def <span class="ident">sub</span></span>(<span>self, inp: int) ‑> int</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Apply the S-box substitution on the input.</p>
-<p>:param inp: Integer, the input value to apply the S-box substitution on.
-:return: Integer, the substituted value after applying the S-box.</p></div>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>inp</code></strong> :&ensp;<code>int</code></dt>
+<dd>The input value to apply the S-box substitution on.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>The substituted value after applying the S-box.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def sbox(self, inp: int) -&gt; int:
+<pre><code class="python">def sub(self, inp: int) -&gt; int:
     &#34;&#34;&#34;
     Apply the S-box substitution on the input.
 
-    :param inp: Integer, the input value to apply the S-box substitution on.
-    :return: Integer, the substituted value after applying the S-box.
+    Parameters
+    ----------
+    inp : int
+        The input value to apply the S-box substitution on.
+
+    Returns
+    -------
+    int
+        The substituted value after applying the S-box.
     &#34;&#34;&#34;
-    ct, BS = 0, self.BOX_SIZE
-    for i in range(self.NUM_SBOX):
-        ct |= self.SBOX[(inp &gt;&gt; (i * BS)) &amp; ((1 &lt;&lt; BS) - 1)] &lt;&lt; (BS * i)
+    ct, bs = 0, self.box_size
+    for i in range(self.num_sbox):
+        ct |= self.sbox[(inp &gt;&gt; (i * bs)) &amp; ((1 &lt;&lt; bs) - 1)] &lt;&lt; (bs * i)
     return ct</code></pre>
 </details>
 </dd>
@@ -756,10 +1182,10 @@ LSB BLOCK_SIZE bits will be used
 <li><code><a title="cryptanalysis.spn.SPN.expand_key" href="#cryptanalysis.spn.SPN.expand_key">expand_key</a></code></li>
 <li><code><a title="cryptanalysis.spn.SPN.int_to_list" href="#cryptanalysis.spn.SPN.int_to_list">int_to_list</a></code></li>
 <li><code><a title="cryptanalysis.spn.SPN.inv_perm" href="#cryptanalysis.spn.SPN.inv_perm">inv_perm</a></code></li>
-<li><code><a title="cryptanalysis.spn.SPN.inv_sbox" href="#cryptanalysis.spn.SPN.inv_sbox">inv_sbox</a></code></li>
+<li><code><a title="cryptanalysis.spn.SPN.inv_sub" href="#cryptanalysis.spn.SPN.inv_sub">inv_sub</a></code></li>
 <li><code><a title="cryptanalysis.spn.SPN.list_to_int" href="#cryptanalysis.spn.SPN.list_to_int">list_to_int</a></code></li>
 <li><code><a title="cryptanalysis.spn.SPN.perm" href="#cryptanalysis.spn.SPN.perm">perm</a></code></li>
-<li><code><a title="cryptanalysis.spn.SPN.sbox" href="#cryptanalysis.spn.SPN.sbox">sbox</a></code></li>
+<li><code><a title="cryptanalysis.spn.SPN.sub" href="#cryptanalysis.spn.SPN.sub">sub</a></code></li>
 </ul>
 </li>
 </ul>

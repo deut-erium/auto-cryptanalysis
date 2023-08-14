@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>cryptanalysis.differential_cryptanalysis API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="Module for performing differential cryptanalysis on Substitution Permutation Network based ciphers …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,19 +22,55 @@
 <h1 class="title">Module <code>cryptanalysis.differential_cryptanalysis</code></h1>
 </header>
 <section id="section-intro">
+<p>Module for performing differential cryptanalysis on Substitution Permutation Network based ciphers.</p>
+<p>Classes:
+- DifferentialCryptanalysis: Class for performing differential cryptanalysis.</p>
+<p>Usage:
+Import the <code>differential_cryptanalysis</code> module to access the <code><a title="cryptanalysis.differential_cryptanalysis.DifferentialCryptanalysis" href="#cryptanalysis.differential_cryptanalysis.DifferentialCryptanalysis">DifferentialCryptanalysis</a></code> class.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from itertools import product
+<pre><code class="python">&#34;&#34;&#34;
+Module for performing differential cryptanalysis on Substitution Permutation Network based ciphers.
+
+Classes:
+- DifferentialCryptanalysis: Class for performing differential cryptanalysis.
+
+Usage:
+Import the `differential_cryptanalysis` module to access the `DifferentialCryptanalysis` class.
+&#34;&#34;&#34;
+from itertools import product
 from collections import Counter
 import random
 from .cryptanalysis import Cryptanalysis
 
 __all__ = [&#34;DifferentialCryptanalysis&#34;]
 
+
 class DifferentialCryptanalysis(Cryptanalysis):
+    &#34;&#34;&#34;
+    Class for performing differential cryptanalysis.
+
+    Methods:
+    - __init__: Initialize the differential cryptanalysis algorithm.
+    - find_keybits: Find the key bits using differential cryptanalysis.
+    - find_last_roundkey: Find the last round key using differential cryptanalysis.
+    - generate_encryption_pairs: Generate encryption pairs for differential cryptanalysis.
+    &#34;&#34;&#34;
+
     def __init__(self, sbox, pbox, num_rounds):
+        &#34;&#34;&#34;
+        Initialize the DifferentialCryptanalysis algorithm.
+
+        Parameters:
+        - sbox: The substitution box used in the SPN
+        - pbox: The permutation box used in the SPN
+        - num_rounds: The number of rounds in the SPN
+
+        Notes:
+        - This method is called when creating an instance of the DifferentialCryptanalysis class.
+        &#34;&#34;&#34;
         super().__init__(sbox, pbox, num_rounds, &#39;differential&#39;)
 
     def find_keybits(self, out_mask, ct_pairs, known_keyblocks=()):
@@ -55,17 +91,19 @@ class DifferentialCryptanalysis(Cryptanalysis):
         out_blocks = self.int_to_list(out_mask)
         active_blocks = [i for i, v in enumerate(out_blocks) if v and i not in known_keyblocks]
         key_diffcounts = Counter()
-        for klst in product(range(len(self.SBOX)), repeat=len(active_blocks)):
-            key = [0] * self.NUM_SBOX
+        for klst in product(range(len(self.sbox)), repeat=len(active_blocks)):
+            key = [0] * self.num_sbox
             for i, v in zip(active_blocks, klst):
                 key[i] = v
             key = self.list_to_int(key)
             for ct1, ct2 in ct_pairs:
-                diff = self.dec_partial_last_noperm(ct1, [key]) ^ self.dec_partial_last_noperm(ct2, [key])
+                diff = self.dec_partial_last_noperm(
+                    ct1, [key]) ^ self.dec_partial_last_noperm(
+                    ct2, [key])
                 diff = self.int_to_list(diff)
                 key_diffcounts[key] += all(out_blocks[i] == diff[i] for i in active_blocks)
                 # key_diffcounts[key] += all(i==j for i,j in zip(out_blocks,diff))
-        topn = key_diffcounts.most_common(self.BOX_SIZE)
+        topn = key_diffcounts.most_common(self.box_size)
         for i, v in topn:
             print(self.int_to_list(i), v)
         return topn[0]
@@ -88,13 +126,13 @@ class DifferentialCryptanalysis(Cryptanalysis):
         Returns:
             list: The last round key determined based on the output masks.
         &#34;&#34;&#34;
-        final_key = [None] * self.NUM_SBOX
+        final_key = [None] * self.num_sbox
         all_pt_ct_pairs = self.generate_encryption_pairs(outmasks, cutoff, multiple=multiple)
         for pt_ct_pairs, (_, out_mask, _) in zip(all_pt_ct_pairs, outmasks):
             ct_pairs = [i[1] for i in pt_ct_pairs]
             # print(&#34;out mask&#34;,self.int_to_list(out_mask))
             k = self.find_keybits(out_mask, ct_pairs, [
-                    i for i, v in enumerate(final_key) if v is not None])
+                i for i, v in enumerate(final_key) if v is not None])
             kr = self.int_to_list(k[0])
             print(kr)
             for i, v in enumerate(self.int_to_list(out_mask)):
@@ -103,7 +141,6 @@ class DifferentialCryptanalysis(Cryptanalysis):
             print(final_key)
             print()
         return final_key
-
 
     def generate_encryption_pairs(self, outmasks, cutoff=10000, multiple=1000):
         &#34;&#34;&#34;Generates encryption pairs for a set of output masks.
@@ -148,7 +185,7 @@ class DifferentialCryptanalysis(Cryptanalysis):
                 pt_pairs.append((i, i ^ inp_mask))
             self.encryptions.update(new_encs)
             while len(pt_pairs) &lt; threshold:
-                r = random.randint(0, 2**(self.NUM_SBOX * self.BOX_SIZE) - 1)
+                r = random.randint(0, 2**(self.num_sbox * self.box_size) - 1)
                 if r in self.encryptions or r ^ inp_mask in self.encryptions:
                     continue
                 self.encryptions[r] = None
@@ -182,28 +219,46 @@ class DifferentialCryptanalysis(Cryptanalysis):
 <span>(</span><span>sbox, pbox, num_rounds)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Helper class that provides a standard way to create an ABC using
-inheritance.</p>
-<p>This method initializes the Cryptanalysis class by calling the <strong>init</strong> method of the SPN class
-(the parent class) and setting the mode and characteristic_searcher attributes. It also initializes
-the encryptions dictionary.</p>
-<h2 id="args">Args</h2>
-<dl>
-<dt><strong><code>sbox</code></strong> :&ensp;<code>list</code></dt>
-<dd>A list of integers representing the S-box.</dd>
-<dt><strong><code>pbox</code></strong> :&ensp;<code>list</code></dt>
-<dd>A list of integers representing the P-box.</dd>
-<dt><strong><code>num_rounds</code></strong> :&ensp;<code>int</code></dt>
-<dd>The number of rounds in the block cipher.</dd>
-<dt><strong><code>mode</code></strong> :&ensp;<code>str</code>, optional</dt>
-<dd>The mode of the cryptanalysis. Defaults to 'differential'.</dd>
-</dl></div>
+<div class="desc"><p>Class for performing differential cryptanalysis.</p>
+<p>Methods:
+- <strong>init</strong>: Initialize the differential cryptanalysis algorithm.
+- find_keybits: Find the key bits using differential cryptanalysis.
+- find_last_roundkey: Find the last round key using differential cryptanalysis.
+- generate_encryption_pairs: Generate encryption pairs for differential cryptanalysis.</p>
+<p>Initialize the DifferentialCryptanalysis algorithm.</p>
+<p>Parameters:
+- sbox: The substitution box used in the SPN
+- pbox: The permutation box used in the SPN
+- num_rounds: The number of rounds in the SPN</p>
+<p>Notes:
+- This method is called when creating an instance of the DifferentialCryptanalysis class.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DifferentialCryptanalysis(Cryptanalysis):
+    &#34;&#34;&#34;
+    Class for performing differential cryptanalysis.
+
+    Methods:
+    - __init__: Initialize the differential cryptanalysis algorithm.
+    - find_keybits: Find the key bits using differential cryptanalysis.
+    - find_last_roundkey: Find the last round key using differential cryptanalysis.
+    - generate_encryption_pairs: Generate encryption pairs for differential cryptanalysis.
+    &#34;&#34;&#34;
+
     def __init__(self, sbox, pbox, num_rounds):
+        &#34;&#34;&#34;
+        Initialize the DifferentialCryptanalysis algorithm.
+
+        Parameters:
+        - sbox: The substitution box used in the SPN
+        - pbox: The permutation box used in the SPN
+        - num_rounds: The number of rounds in the SPN
+
+        Notes:
+        - This method is called when creating an instance of the DifferentialCryptanalysis class.
+        &#34;&#34;&#34;
         super().__init__(sbox, pbox, num_rounds, &#39;differential&#39;)
 
     def find_keybits(self, out_mask, ct_pairs, known_keyblocks=()):
@@ -224,17 +279,19 @@ the encryptions dictionary.</p>
         out_blocks = self.int_to_list(out_mask)
         active_blocks = [i for i, v in enumerate(out_blocks) if v and i not in known_keyblocks]
         key_diffcounts = Counter()
-        for klst in product(range(len(self.SBOX)), repeat=len(active_blocks)):
-            key = [0] * self.NUM_SBOX
+        for klst in product(range(len(self.sbox)), repeat=len(active_blocks)):
+            key = [0] * self.num_sbox
             for i, v in zip(active_blocks, klst):
                 key[i] = v
             key = self.list_to_int(key)
             for ct1, ct2 in ct_pairs:
-                diff = self.dec_partial_last_noperm(ct1, [key]) ^ self.dec_partial_last_noperm(ct2, [key])
+                diff = self.dec_partial_last_noperm(
+                    ct1, [key]) ^ self.dec_partial_last_noperm(
+                    ct2, [key])
                 diff = self.int_to_list(diff)
                 key_diffcounts[key] += all(out_blocks[i] == diff[i] for i in active_blocks)
                 # key_diffcounts[key] += all(i==j for i,j in zip(out_blocks,diff))
-        topn = key_diffcounts.most_common(self.BOX_SIZE)
+        topn = key_diffcounts.most_common(self.box_size)
         for i, v in topn:
             print(self.int_to_list(i), v)
         return topn[0]
@@ -257,13 +314,13 @@ the encryptions dictionary.</p>
         Returns:
             list: The last round key determined based on the output masks.
         &#34;&#34;&#34;
-        final_key = [None] * self.NUM_SBOX
+        final_key = [None] * self.num_sbox
         all_pt_ct_pairs = self.generate_encryption_pairs(outmasks, cutoff, multiple=multiple)
         for pt_ct_pairs, (_, out_mask, _) in zip(all_pt_ct_pairs, outmasks):
             ct_pairs = [i[1] for i in pt_ct_pairs]
             # print(&#34;out mask&#34;,self.int_to_list(out_mask))
             k = self.find_keybits(out_mask, ct_pairs, [
-                    i for i, v in enumerate(final_key) if v is not None])
+                i for i, v in enumerate(final_key) if v is not None])
             kr = self.int_to_list(k[0])
             print(kr)
             for i, v in enumerate(self.int_to_list(out_mask)):
@@ -272,7 +329,6 @@ the encryptions dictionary.</p>
             print(final_key)
             print()
         return final_key
-
 
     def generate_encryption_pairs(self, outmasks, cutoff=10000, multiple=1000):
         &#34;&#34;&#34;Generates encryption pairs for a set of output masks.
@@ -317,7 +373,7 @@ the encryptions dictionary.</p>
                 pt_pairs.append((i, i ^ inp_mask))
             self.encryptions.update(new_encs)
             while len(pt_pairs) &lt; threshold:
-                r = random.randint(0, 2**(self.NUM_SBOX * self.BOX_SIZE) - 1)
+                r = random.randint(0, 2**(self.num_sbox * self.box_size) - 1)
                 if r in self.encryptions or r ^ inp_mask in self.encryptions:
                     continue
                 self.encryptions[r] = None
@@ -388,17 +444,19 @@ It implements the logic to find the key bits based on the provided parameters.</
     out_blocks = self.int_to_list(out_mask)
     active_blocks = [i for i, v in enumerate(out_blocks) if v and i not in known_keyblocks]
     key_diffcounts = Counter()
-    for klst in product(range(len(self.SBOX)), repeat=len(active_blocks)):
-        key = [0] * self.NUM_SBOX
+    for klst in product(range(len(self.sbox)), repeat=len(active_blocks)):
+        key = [0] * self.num_sbox
         for i, v in zip(active_blocks, klst):
             key[i] = v
         key = self.list_to_int(key)
         for ct1, ct2 in ct_pairs:
-            diff = self.dec_partial_last_noperm(ct1, [key]) ^ self.dec_partial_last_noperm(ct2, [key])
+            diff = self.dec_partial_last_noperm(
+                ct1, [key]) ^ self.dec_partial_last_noperm(
+                ct2, [key])
             diff = self.int_to_list(diff)
             key_diffcounts[key] += all(out_blocks[i] == diff[i] for i in active_blocks)
             # key_diffcounts[key] += all(i==j for i,j in zip(out_blocks,diff))
-    topn = key_diffcounts.most_common(self.BOX_SIZE)
+    topn = key_diffcounts.most_common(self.box_size)
     for i, v in topn:
         print(self.int_to_list(i), v)
     return topn[0]</code></pre>
@@ -451,13 +509,13 @@ encrypted at once used for generating encryption pairs. Defaults to 1000.</dd>
     Returns:
         list: The last round key determined based on the output masks.
     &#34;&#34;&#34;
-    final_key = [None] * self.NUM_SBOX
+    final_key = [None] * self.num_sbox
     all_pt_ct_pairs = self.generate_encryption_pairs(outmasks, cutoff, multiple=multiple)
     for pt_ct_pairs, (_, out_mask, _) in zip(all_pt_ct_pairs, outmasks):
         ct_pairs = [i[1] for i in pt_ct_pairs]
         # print(&#34;out mask&#34;,self.int_to_list(out_mask))
         k = self.find_keybits(out_mask, ct_pairs, [
-                i for i, v in enumerate(final_key) if v is not None])
+            i for i, v in enumerate(final_key) if v is not None])
         kr = self.int_to_list(k[0])
         print(kr)
         for i, v in enumerate(self.int_to_list(out_mask)):
@@ -539,7 +597,7 @@ encrypted at once used for generating encryption pairs. Defaults to 1000.</dd>
             pt_pairs.append((i, i ^ inp_mask))
         self.encryptions.update(new_encs)
         while len(pt_pairs) &lt; threshold:
-            r = random.randint(0, 2**(self.NUM_SBOX * self.BOX_SIZE) - 1)
+            r = random.randint(0, 2**(self.num_sbox * self.box_size) - 1)
             if r in self.encryptions or r ^ inp_mask in self.encryptions:
                 continue
             self.encryptions[r] = None
@@ -570,10 +628,10 @@ encrypted at once used for generating encryption pairs. Defaults to 1000.</dd>
 <li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.expand_key" href="spn.html#cryptanalysis.spn.SPN.expand_key">expand_key</a></code></li>
 <li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.int_to_list" href="spn.html#cryptanalysis.spn.SPN.int_to_list">int_to_list</a></code></li>
 <li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.inv_perm" href="spn.html#cryptanalysis.spn.SPN.inv_perm">inv_perm</a></code></li>
-<li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.inv_sbox" href="spn.html#cryptanalysis.spn.SPN.inv_sbox">inv_sbox</a></code></li>
+<li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.inv_sub" href="spn.html#cryptanalysis.spn.SPN.inv_sub">inv_sub</a></code></li>
 <li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.list_to_int" href="spn.html#cryptanalysis.spn.SPN.list_to_int">list_to_int</a></code></li>
 <li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.perm" href="spn.html#cryptanalysis.spn.SPN.perm">perm</a></code></li>
-<li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.sbox" href="spn.html#cryptanalysis.spn.SPN.sbox">sbox</a></code></li>
+<li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.sub" href="spn.html#cryptanalysis.spn.SPN.sub">sub</a></code></li>
 <li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.update_encryptions" href="cryptanalysis.html#cryptanalysis.cryptanalysis.Cryptanalysis.update_encryptions">update_encryptions</a></code></li>
 </ul>
 </li>
