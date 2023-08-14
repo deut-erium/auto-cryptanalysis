@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>cryptanalysis.linear_cryptanalysis API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>cryptanalysis.linear_cryptanalysis</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">from collections import Counter
+from itertools import product
+import random
+from tqdm import tqdm
+from .cryptanalysis import Cryptanalysis
+
+__all__ = [&#34;LinearCryptanalysis&#34;]
+
+class LinearCryptanalysis(Cryptanalysis):
+    def __init__(self, sbox, pbox, num_rounds):
+        super().__init__(sbox, pbox, num_rounds, &#39;linear&#39;)
+
+
+    def find_keybits_multimasks(self, in_out_masks, ptct_pairs, known_keyblocks=()):
+        &#34;&#34;&#34;Finds the key bits based on multiple input-output masks and plaintext-ciphertext pairs.
+
+        This method takes a list of input-output masks, a list of plaintext-ciphertext pairs,
+        and an optional list of known key blocks as input.
+        It implements the logic to find the key bits based on the provided parameters.
+
+        Args:
+            in_out_masks (list): A list of input-output masks for key search.
+            ptct_pairs (list): A list of plaintext-ciphertext pairs used for analysis.
+            known_keyblocks (list, optional): A list of known key blocks. Defaults to an empty list.
+
+        Returns:
+            list: A list of Counter objects containing the key bit differences for each active block.
+        &#34;&#34;&#34;
+        key_diffcounts = [Counter() for i in range(self.NUM_SBOX)]
+        for in_mask, out_mask, _ in tqdm(in_out_masks):
+            out_blocks = self.int_to_list(out_mask)
+            active_blocks = [i for i, v in enumerate(
+                out_blocks) if v and i not in known_keyblocks]
+            key_diffcount_curr = Counter()
+            for klst in product(range(len(self.SBOX)), repeat=len(active_blocks)):
+                key = [0] * self.NUM_SBOX
+                for i, v in zip(active_blocks, klst):
+                    key[i] = v
+                key = self.list_to_int(key)
+                for pt, ct in ptct_pairs:
+                    ct_last = self.dec_partial_last_noperm(ct, [key])
+                    key_diffcount_curr[key] += self.parity((pt &amp; in_mask) ^ (ct_last &amp; out_mask))
+            for i in key_diffcount_curr:
+                count = abs(key_diffcount_curr[i] - len(ptct_pairs) // 2)
+                key_list = self.int_to_list(i)
+                for j in active_blocks:
+                    key_diffcounts[j][key_list[j]] += count
+            for j in active_blocks:
+                topn = key_diffcounts[j].most_common(self.BOX_SIZE)
+                for i, v in topn:
+                    print(i, v)
+        return key_diffcounts
+
+
+    def find_keybits(self, in_mask, out_mask, ptct_pairs, known_keyblocks=()):
+        &#34;&#34;&#34;Finds the key bits based on an input mask, an output mask, and plaintext-ciphertext pairs.
+
+        This method takes an input mask, an output mask, a list of plaintext-ciphertext
+        pairs, and an optional list of known key blocks as input.
+        It implements the logic to find the key bits based on the provided parameters.
+
+        Args:
+            in_mask (int): The input mask for the key search.
+            out_mask (int): The output mask for the key search.
+            ptct_pairs (list): A list of tuples of plaintext-ciphertext pairs used for analysis.
+            known_keyblocks (list, optional): A list of known key blocks. Defaults to an empty list.
+
+        Returns:
+            int: A integer representing the most probable keybits
+        &#34;&#34;&#34;
+
+        out_blocks = self.int_to_list(out_mask)
+        active_blocks = [i for i, v in enumerate(
+            out_blocks) if v and i not in known_keyblocks]
+        key_diffcounts = Counter()
+        for klst in product(range(len(self.SBOX)), repeat=len(active_blocks)):
+            key = [0] * self.NUM_SBOX
+            for i, v in zip(active_blocks, klst):
+                key[i] = v
+            key = self.list_to_int(key)
+            for pt, ct in ptct_pairs:
+                ct_last = self.dec_partial_last_noperm(ct, [key])
+                key_diffcounts[key] += self.parity((pt &amp; in_mask) ^ (ct_last &amp; out_mask))
+        for i in key_diffcounts:
+            key_diffcounts[i] = abs(key_diffcounts[i] - len(ptct_pairs) // 2)
+        topn = key_diffcounts.most_common(self.BOX_SIZE)
+        for i, v in topn:
+            print(self.int_to_list(i), v)
+        return topn[0]
+
+    def find_last_roundkey(self, outmasks, cutoff=50000, multiple=1000):
+        &#34;&#34;&#34;Finds the last round key based on output masks.
+
+        This method overrides the abstract `find_last_roundkey` method in the `Cryptanalysis` class.
+        It takes a list of output masks, a cutoff value, and a multiple value as input.
+        It implements the logic to find the last round key based on the output
+        masks and the specified parameters.
+
+        Args:
+            outmasks (list): A list of tuples of (input, output masks, bias) for which
+                                the last round key needs to be found.
+            cutoff (int, optional): The cutoff value used for the maximum number of encryptions
+                                    called from oracle in determining the last round key. Defaults to 10000.
+            multiple (int, optional): The multiple indicating the size of the batch of values to be
+                                encrypted at once used for generating encryption pairs. Defaults to 1000.
+
+        Returns:
+            list: The last round key determined based on the output masks.
+        &#34;&#34;&#34;
+        final_key = [None] * self.NUM_SBOX
+        all_pt_ct_pairs = self.generate_encryption_pairs(outmasks, cutoff, multiple=multiple)
+        for ptct_pairs, (inp_mask, out_mask, _) in zip(all_pt_ct_pairs, outmasks):
+            k = self.find_keybits(inp_mask, out_mask, ptct_pairs, [
+                    i for i, v in enumerate(final_key) if v is not None])
+            kr = self.int_to_list(k[0])
+            print(kr)
+            for i, v in enumerate(self.int_to_list(out_mask)):
+                if v and final_key[i] is None:
+                    final_key[i] = kr[i]
+            print(final_key)
+            print()
+        return final_key
+
+    def generate_encryption_pairs(self, outmasks, cutoff=10000, multiple=1000):
+        &#34;&#34;&#34;Generates encryption pairs for a set of output masks.
+
+        This method takes a list of output masks, a cutoff value, and a multiple value as input.
+        It generates plaintext-ciphertext pairs for each output mask based on the specified parameters.
+
+        Args:
+            outmasks (list): A list of tuples of (input, output masks, bias) for which
+                                the last round key needs to be found.
+            cutoff (int, optional): The cutoff value used for the maximum number of encryptions
+                                    called from oracle in determining the last round key. Defaults to 10000.
+            multiple (int, optional): The multiple indicating the size of the batch of values to be
+                                encrypted at once used for generating encryption pairs. Defaults to 1000.
+        Returns:
+            list: A list of plaintext-ciphertext pairs for each output mask.
+        &#34;&#34;&#34;
+        max_threshold = max(100 * int(1 / (bias * bias)) for _, _, bias in outmasks)
+        threshold = min(cutoff, max_threshold)
+        all_pt = list(self.encryptions)[:threshold]
+        while len(all_pt) &lt; threshold:
+            r = random.randint(0, 2**(self.NUM_SBOX * self.BOX_SIZE) - 1)
+            if r in self.encryptions:
+                continue
+            self.encryptions[r] = None
+            all_pt.append(r)
+        self.update_encryptions(multiple=multiple)
+        all_ptct = [(i, self.encryptions[i]) for i in all_pt]
+        return [all_ptct]*len(outmasks)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="cryptanalysis.linear_cryptanalysis.LinearCryptanalysis"><code class="flex name class">
+<span>class <span class="ident">LinearCryptanalysis</span></span>
+<span>(</span><span>sbox, pbox, num_rounds)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Helper class that provides a standard way to create an ABC using
+inheritance.</p>
+<p>This method initializes the Cryptanalysis class by calling the <strong>init</strong> method of the SPN class
+(the parent class) and setting the mode and characteristic_searcher attributes. It also initializes
+the encryptions dictionary.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sbox</code></strong> :&ensp;<code>list</code></dt>
+<dd>A list of integers representing the S-box.</dd>
+<dt><strong><code>pbox</code></strong> :&ensp;<code>list</code></dt>
+<dd>A list of integers representing the P-box.</dd>
+<dt><strong><code>num_rounds</code></strong> :&ensp;<code>int</code></dt>
+<dd>The number of rounds in the block cipher.</dd>
+<dt><strong><code>mode</code></strong> :&ensp;<code>str</code>, optional</dt>
+<dd>The mode of the cryptanalysis. Defaults to 'differential'.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LinearCryptanalysis(Cryptanalysis):
+    def __init__(self, sbox, pbox, num_rounds):
+        super().__init__(sbox, pbox, num_rounds, &#39;linear&#39;)
+
+
+    def find_keybits_multimasks(self, in_out_masks, ptct_pairs, known_keyblocks=()):
+        &#34;&#34;&#34;Finds the key bits based on multiple input-output masks and plaintext-ciphertext pairs.
+
+        This method takes a list of input-output masks, a list of plaintext-ciphertext pairs,
+        and an optional list of known key blocks as input.
+        It implements the logic to find the key bits based on the provided parameters.
+
+        Args:
+            in_out_masks (list): A list of input-output masks for key search.
+            ptct_pairs (list): A list of plaintext-ciphertext pairs used for analysis.
+            known_keyblocks (list, optional): A list of known key blocks. Defaults to an empty list.
+
+        Returns:
+            list: A list of Counter objects containing the key bit differences for each active block.
+        &#34;&#34;&#34;
+        key_diffcounts = [Counter() for i in range(self.NUM_SBOX)]
+        for in_mask, out_mask, _ in tqdm(in_out_masks):
+            out_blocks = self.int_to_list(out_mask)
+            active_blocks = [i for i, v in enumerate(
+                out_blocks) if v and i not in known_keyblocks]
+            key_diffcount_curr = Counter()
+            for klst in product(range(len(self.SBOX)), repeat=len(active_blocks)):
+                key = [0] * self.NUM_SBOX
+                for i, v in zip(active_blocks, klst):
+                    key[i] = v
+                key = self.list_to_int(key)
+                for pt, ct in ptct_pairs:
+                    ct_last = self.dec_partial_last_noperm(ct, [key])
+                    key_diffcount_curr[key] += self.parity((pt &amp; in_mask) ^ (ct_last &amp; out_mask))
+            for i in key_diffcount_curr:
+                count = abs(key_diffcount_curr[i] - len(ptct_pairs) // 2)
+                key_list = self.int_to_list(i)
+                for j in active_blocks:
+                    key_diffcounts[j][key_list[j]] += count
+            for j in active_blocks:
+                topn = key_diffcounts[j].most_common(self.BOX_SIZE)
+                for i, v in topn:
+                    print(i, v)
+        return key_diffcounts
+
+
+    def find_keybits(self, in_mask, out_mask, ptct_pairs, known_keyblocks=()):
+        &#34;&#34;&#34;Finds the key bits based on an input mask, an output mask, and plaintext-ciphertext pairs.
+
+        This method takes an input mask, an output mask, a list of plaintext-ciphertext
+        pairs, and an optional list of known key blocks as input.
+        It implements the logic to find the key bits based on the provided parameters.
+
+        Args:
+            in_mask (int): The input mask for the key search.
+            out_mask (int): The output mask for the key search.
+            ptct_pairs (list): A list of tuples of plaintext-ciphertext pairs used for analysis.
+            known_keyblocks (list, optional): A list of known key blocks. Defaults to an empty list.
+
+        Returns:
+            int: A integer representing the most probable keybits
+        &#34;&#34;&#34;
+
+        out_blocks = self.int_to_list(out_mask)
+        active_blocks = [i for i, v in enumerate(
+            out_blocks) if v and i not in known_keyblocks]
+        key_diffcounts = Counter()
+        for klst in product(range(len(self.SBOX)), repeat=len(active_blocks)):
+            key = [0] * self.NUM_SBOX
+            for i, v in zip(active_blocks, klst):
+                key[i] = v
+            key = self.list_to_int(key)
+            for pt, ct in ptct_pairs:
+                ct_last = self.dec_partial_last_noperm(ct, [key])
+                key_diffcounts[key] += self.parity((pt &amp; in_mask) ^ (ct_last &amp; out_mask))
+        for i in key_diffcounts:
+            key_diffcounts[i] = abs(key_diffcounts[i] - len(ptct_pairs) // 2)
+        topn = key_diffcounts.most_common(self.BOX_SIZE)
+        for i, v in topn:
+            print(self.int_to_list(i), v)
+        return topn[0]
+
+    def find_last_roundkey(self, outmasks, cutoff=50000, multiple=1000):
+        &#34;&#34;&#34;Finds the last round key based on output masks.
+
+        This method overrides the abstract `find_last_roundkey` method in the `Cryptanalysis` class.
+        It takes a list of output masks, a cutoff value, and a multiple value as input.
+        It implements the logic to find the last round key based on the output
+        masks and the specified parameters.
+
+        Args:
+            outmasks (list): A list of tuples of (input, output masks, bias) for which
+                                the last round key needs to be found.
+            cutoff (int, optional): The cutoff value used for the maximum number of encryptions
+                                    called from oracle in determining the last round key. Defaults to 10000.
+            multiple (int, optional): The multiple indicating the size of the batch of values to be
+                                encrypted at once used for generating encryption pairs. Defaults to 1000.
+
+        Returns:
+            list: The last round key determined based on the output masks.
+        &#34;&#34;&#34;
+        final_key = [None] * self.NUM_SBOX
+        all_pt_ct_pairs = self.generate_encryption_pairs(outmasks, cutoff, multiple=multiple)
+        for ptct_pairs, (inp_mask, out_mask, _) in zip(all_pt_ct_pairs, outmasks):
+            k = self.find_keybits(inp_mask, out_mask, ptct_pairs, [
+                    i for i, v in enumerate(final_key) if v is not None])
+            kr = self.int_to_list(k[0])
+            print(kr)
+            for i, v in enumerate(self.int_to_list(out_mask)):
+                if v and final_key[i] is None:
+                    final_key[i] = kr[i]
+            print(final_key)
+            print()
+        return final_key
+
+    def generate_encryption_pairs(self, outmasks, cutoff=10000, multiple=1000):
+        &#34;&#34;&#34;Generates encryption pairs for a set of output masks.
+
+        This method takes a list of output masks, a cutoff value, and a multiple value as input.
+        It generates plaintext-ciphertext pairs for each output mask based on the specified parameters.
+
+        Args:
+            outmasks (list): A list of tuples of (input, output masks, bias) for which
+                                the last round key needs to be found.
+            cutoff (int, optional): The cutoff value used for the maximum number of encryptions
+                                    called from oracle in determining the last round key. Defaults to 10000.
+            multiple (int, optional): The multiple indicating the size of the batch of values to be
+                                encrypted at once used for generating encryption pairs. Defaults to 1000.
+        Returns:
+            list: A list of plaintext-ciphertext pairs for each output mask.
+        &#34;&#34;&#34;
+        max_threshold = max(100 * int(1 / (bias * bias)) for _, _, bias in outmasks)
+        threshold = min(cutoff, max_threshold)
+        all_pt = list(self.encryptions)[:threshold]
+        while len(all_pt) &lt; threshold:
+            r = random.randint(0, 2**(self.NUM_SBOX * self.BOX_SIZE) - 1)
+            if r in self.encryptions:
+                continue
+            self.encryptions[r] = None
+            all_pt.append(r)
+        self.update_encryptions(multiple=multiple)
+        all_ptct = [(i, self.encryptions[i]) for i in all_pt]
+        return [all_ptct]*len(outmasks)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="cryptanalysis.cryptanalysis.Cryptanalysis" href="cryptanalysis.html#cryptanalysis.cryptanalysis.Cryptanalysis">Cryptanalysis</a></li>
+<li><a title="cryptanalysis.spn.SPN" href="spn.html#cryptanalysis.spn.SPN">SPN</a></li>
+<li>abc.ABC</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="cryptanalysis.linear_cryptanalysis.LinearCryptanalysis.find_keybits"><code class="name flex">
+<span>def <span class="ident">find_keybits</span></span>(<span>self, in_mask, out_mask, ptct_pairs, known_keyblocks=())</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Finds the key bits based on an input mask, an output mask, and plaintext-ciphertext pairs.</p>
+<p>This method takes an input mask, an output mask, a list of plaintext-ciphertext
+pairs, and an optional list of known key blocks as input.
+It implements the logic to find the key bits based on the provided parameters.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>in_mask</code></strong> :&ensp;<code>int</code></dt>
+<dd>The input mask for the key search.</dd>
+<dt><strong><code>out_mask</code></strong> :&ensp;<code>int</code></dt>
+<dd>The output mask for the key search.</dd>
+<dt><strong><code>ptct_pairs</code></strong> :&ensp;<code>list</code></dt>
+<dd>A list of tuples of plaintext-ciphertext pairs used for analysis.</dd>
+<dt><strong><code>known_keyblocks</code></strong> :&ensp;<code>list</code>, optional</dt>
+<dd>A list of known key blocks. Defaults to an empty list.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>A integer representing the most probable keybits</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def find_keybits(self, in_mask, out_mask, ptct_pairs, known_keyblocks=()):
+    &#34;&#34;&#34;Finds the key bits based on an input mask, an output mask, and plaintext-ciphertext pairs.
+
+    This method takes an input mask, an output mask, a list of plaintext-ciphertext
+    pairs, and an optional list of known key blocks as input.
+    It implements the logic to find the key bits based on the provided parameters.
+
+    Args:
+        in_mask (int): The input mask for the key search.
+        out_mask (int): The output mask for the key search.
+        ptct_pairs (list): A list of tuples of plaintext-ciphertext pairs used for analysis.
+        known_keyblocks (list, optional): A list of known key blocks. Defaults to an empty list.
+
+    Returns:
+        int: A integer representing the most probable keybits
+    &#34;&#34;&#34;
+
+    out_blocks = self.int_to_list(out_mask)
+    active_blocks = [i for i, v in enumerate(
+        out_blocks) if v and i not in known_keyblocks]
+    key_diffcounts = Counter()
+    for klst in product(range(len(self.SBOX)), repeat=len(active_blocks)):
+        key = [0] * self.NUM_SBOX
+        for i, v in zip(active_blocks, klst):
+            key[i] = v
+        key = self.list_to_int(key)
+        for pt, ct in ptct_pairs:
+            ct_last = self.dec_partial_last_noperm(ct, [key])
+            key_diffcounts[key] += self.parity((pt &amp; in_mask) ^ (ct_last &amp; out_mask))
+    for i in key_diffcounts:
+        key_diffcounts[i] = abs(key_diffcounts[i] - len(ptct_pairs) // 2)
+    topn = key_diffcounts.most_common(self.BOX_SIZE)
+    for i, v in topn:
+        print(self.int_to_list(i), v)
+    return topn[0]</code></pre>
+</details>
+</dd>
+<dt id="cryptanalysis.linear_cryptanalysis.LinearCryptanalysis.find_keybits_multimasks"><code class="name flex">
+<span>def <span class="ident">find_keybits_multimasks</span></span>(<span>self, in_out_masks, ptct_pairs, known_keyblocks=())</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Finds the key bits based on multiple input-output masks and plaintext-ciphertext pairs.</p>
+<p>This method takes a list of input-output masks, a list of plaintext-ciphertext pairs,
+and an optional list of known key blocks as input.
+It implements the logic to find the key bits based on the provided parameters.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>in_out_masks</code></strong> :&ensp;<code>list</code></dt>
+<dd>A list of input-output masks for key search.</dd>
+<dt><strong><code>ptct_pairs</code></strong> :&ensp;<code>list</code></dt>
+<dd>A list of plaintext-ciphertext pairs used for analysis.</dd>
+<dt><strong><code>known_keyblocks</code></strong> :&ensp;<code>list</code>, optional</dt>
+<dd>A list of known key blocks. Defaults to an empty list.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>A list of Counter objects containing the key bit differences for each active block.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def find_keybits_multimasks(self, in_out_masks, ptct_pairs, known_keyblocks=()):
+    &#34;&#34;&#34;Finds the key bits based on multiple input-output masks and plaintext-ciphertext pairs.
+
+    This method takes a list of input-output masks, a list of plaintext-ciphertext pairs,
+    and an optional list of known key blocks as input.
+    It implements the logic to find the key bits based on the provided parameters.
+
+    Args:
+        in_out_masks (list): A list of input-output masks for key search.
+        ptct_pairs (list): A list of plaintext-ciphertext pairs used for analysis.
+        known_keyblocks (list, optional): A list of known key blocks. Defaults to an empty list.
+
+    Returns:
+        list: A list of Counter objects containing the key bit differences for each active block.
+    &#34;&#34;&#34;
+    key_diffcounts = [Counter() for i in range(self.NUM_SBOX)]
+    for in_mask, out_mask, _ in tqdm(in_out_masks):
+        out_blocks = self.int_to_list(out_mask)
+        active_blocks = [i for i, v in enumerate(
+            out_blocks) if v and i not in known_keyblocks]
+        key_diffcount_curr = Counter()
+        for klst in product(range(len(self.SBOX)), repeat=len(active_blocks)):
+            key = [0] * self.NUM_SBOX
+            for i, v in zip(active_blocks, klst):
+                key[i] = v
+            key = self.list_to_int(key)
+            for pt, ct in ptct_pairs:
+                ct_last = self.dec_partial_last_noperm(ct, [key])
+                key_diffcount_curr[key] += self.parity((pt &amp; in_mask) ^ (ct_last &amp; out_mask))
+        for i in key_diffcount_curr:
+            count = abs(key_diffcount_curr[i] - len(ptct_pairs) // 2)
+            key_list = self.int_to_list(i)
+            for j in active_blocks:
+                key_diffcounts[j][key_list[j]] += count
+        for j in active_blocks:
+            topn = key_diffcounts[j].most_common(self.BOX_SIZE)
+            for i, v in topn:
+                print(i, v)
+    return key_diffcounts</code></pre>
+</details>
+</dd>
+<dt id="cryptanalysis.linear_cryptanalysis.LinearCryptanalysis.find_last_roundkey"><code class="name flex">
+<span>def <span class="ident">find_last_roundkey</span></span>(<span>self, outmasks, cutoff=50000, multiple=1000)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Finds the last round key based on output masks.</p>
+<p>This method overrides the abstract <code>find_last_roundkey</code> method in the <code>Cryptanalysis</code> class.
+It takes a list of output masks, a cutoff value, and a multiple value as input.
+It implements the logic to find the last round key based on the output
+masks and the specified parameters.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>outmasks</code></strong> :&ensp;<code>list</code></dt>
+<dd>A list of tuples of (input, output masks, bias) for which
+the last round key needs to be found.</dd>
+<dt><strong><code>cutoff</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The cutoff value used for the maximum number of encryptions
+called from oracle in determining the last round key. Defaults to 10000.</dd>
+<dt><strong><code>multiple</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The multiple indicating the size of the batch of values to be
+encrypted at once used for generating encryption pairs. Defaults to 1000.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>The last round key determined based on the output masks.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def find_last_roundkey(self, outmasks, cutoff=50000, multiple=1000):
+    &#34;&#34;&#34;Finds the last round key based on output masks.
+
+    This method overrides the abstract `find_last_roundkey` method in the `Cryptanalysis` class.
+    It takes a list of output masks, a cutoff value, and a multiple value as input.
+    It implements the logic to find the last round key based on the output
+    masks and the specified parameters.
+
+    Args:
+        outmasks (list): A list of tuples of (input, output masks, bias) for which
+                            the last round key needs to be found.
+        cutoff (int, optional): The cutoff value used for the maximum number of encryptions
+                                called from oracle in determining the last round key. Defaults to 10000.
+        multiple (int, optional): The multiple indicating the size of the batch of values to be
+                            encrypted at once used for generating encryption pairs. Defaults to 1000.
+
+    Returns:
+        list: The last round key determined based on the output masks.
+    &#34;&#34;&#34;
+    final_key = [None] * self.NUM_SBOX
+    all_pt_ct_pairs = self.generate_encryption_pairs(outmasks, cutoff, multiple=multiple)
+    for ptct_pairs, (inp_mask, out_mask, _) in zip(all_pt_ct_pairs, outmasks):
+        k = self.find_keybits(inp_mask, out_mask, ptct_pairs, [
+                i for i, v in enumerate(final_key) if v is not None])
+        kr = self.int_to_list(k[0])
+        print(kr)
+        for i, v in enumerate(self.int_to_list(out_mask)):
+            if v and final_key[i] is None:
+                final_key[i] = kr[i]
+        print(final_key)
+        print()
+    return final_key</code></pre>
+</details>
+</dd>
+<dt id="cryptanalysis.linear_cryptanalysis.LinearCryptanalysis.generate_encryption_pairs"><code class="name flex">
+<span>def <span class="ident">generate_encryption_pairs</span></span>(<span>self, outmasks, cutoff=10000, multiple=1000)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generates encryption pairs for a set of output masks.</p>
+<p>This method takes a list of output masks, a cutoff value, and a multiple value as input.
+It generates plaintext-ciphertext pairs for each output mask based on the specified parameters.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>outmasks</code></strong> :&ensp;<code>list</code></dt>
+<dd>A list of tuples of (input, output masks, bias) for which
+the last round key needs to be found.</dd>
+<dt><strong><code>cutoff</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The cutoff value used for the maximum number of encryptions
+called from oracle in determining the last round key. Defaults to 10000.</dd>
+<dt><strong><code>multiple</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The multiple indicating the size of the batch of values to be
+encrypted at once used for generating encryption pairs. Defaults to 1000.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>A list of plaintext-ciphertext pairs for each output mask.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def generate_encryption_pairs(self, outmasks, cutoff=10000, multiple=1000):
+    &#34;&#34;&#34;Generates encryption pairs for a set of output masks.
+
+    This method takes a list of output masks, a cutoff value, and a multiple value as input.
+    It generates plaintext-ciphertext pairs for each output mask based on the specified parameters.
+
+    Args:
+        outmasks (list): A list of tuples of (input, output masks, bias) for which
+                            the last round key needs to be found.
+        cutoff (int, optional): The cutoff value used for the maximum number of encryptions
+                                called from oracle in determining the last round key. Defaults to 10000.
+        multiple (int, optional): The multiple indicating the size of the batch of values to be
+                            encrypted at once used for generating encryption pairs. Defaults to 1000.
+    Returns:
+        list: A list of plaintext-ciphertext pairs for each output mask.
+    &#34;&#34;&#34;
+    max_threshold = max(100 * int(1 / (bias * bias)) for _, _, bias in outmasks)
+    threshold = min(cutoff, max_threshold)
+    all_pt = list(self.encryptions)[:threshold]
+    while len(all_pt) &lt; threshold:
+        r = random.randint(0, 2**(self.NUM_SBOX * self.BOX_SIZE) - 1)
+        if r in self.encryptions:
+            continue
+        self.encryptions[r] = None
+        all_pt.append(r)
+    self.update_encryptions(multiple=multiple)
+    all_ptct = [(i, self.encryptions[i]) for i in all_pt]
+    return [all_ptct]*len(outmasks)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="cryptanalysis.cryptanalysis.Cryptanalysis" href="cryptanalysis.html#cryptanalysis.cryptanalysis.Cryptanalysis">Cryptanalysis</a></b></code>:
+<ul class="hlist">
+<li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.batch_encrypt" href="cryptanalysis.html#cryptanalysis.cryptanalysis.Cryptanalysis.batch_encrypt">batch_encrypt</a></code></li>
+<li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.dec_partial_last_noperm" href="cryptanalysis.html#cryptanalysis.cryptanalysis.Cryptanalysis.dec_partial_last_noperm">dec_partial_last_noperm</a></code></li>
+<li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.dec_partial_last_withperm" href="cryptanalysis.html#cryptanalysis.cryptanalysis.Cryptanalysis.dec_partial_last_withperm">dec_partial_last_withperm</a></code></li>
+<li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.expand_key" href="spn.html#cryptanalysis.spn.SPN.expand_key">expand_key</a></code></li>
+<li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.int_to_list" href="spn.html#cryptanalysis.spn.SPN.int_to_list">int_to_list</a></code></li>
+<li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.inv_perm" href="spn.html#cryptanalysis.spn.SPN.inv_perm">inv_perm</a></code></li>
+<li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.inv_sbox" href="spn.html#cryptanalysis.spn.SPN.inv_sbox">inv_sbox</a></code></li>
+<li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.list_to_int" href="spn.html#cryptanalysis.spn.SPN.list_to_int">list_to_int</a></code></li>
+<li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.perm" href="spn.html#cryptanalysis.spn.SPN.perm">perm</a></code></li>
+<li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.sbox" href="spn.html#cryptanalysis.spn.SPN.sbox">sbox</a></code></li>
+<li><code><a title="cryptanalysis.cryptanalysis.Cryptanalysis.update_encryptions" href="cryptanalysis.html#cryptanalysis.cryptanalysis.Cryptanalysis.update_encryptions">update_encryptions</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="cryptanalysis" href="index.html">cryptanalysis</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="cryptanalysis.linear_cryptanalysis.LinearCryptanalysis" href="#cryptanalysis.linear_cryptanalysis.LinearCryptanalysis">LinearCryptanalysis</a></code></h4>
+<ul class="">
+<li><code><a title="cryptanalysis.linear_cryptanalysis.LinearCryptanalysis.find_keybits" href="#cryptanalysis.linear_cryptanalysis.LinearCryptanalysis.find_keybits">find_keybits</a></code></li>
+<li><code><a title="cryptanalysis.linear_cryptanalysis.LinearCryptanalysis.find_keybits_multimasks" href="#cryptanalysis.linear_cryptanalysis.LinearCryptanalysis.find_keybits_multimasks">find_keybits_multimasks</a></code></li>
+<li><code><a title="cryptanalysis.linear_cryptanalysis.LinearCryptanalysis.find_last_roundkey" href="#cryptanalysis.linear_cryptanalysis.LinearCryptanalysis.find_last_roundkey">find_last_roundkey</a></code></li>
+<li><code><a title="cryptanalysis.linear_cryptanalysis.LinearCryptanalysis.generate_encryption_pairs" href="#cryptanalysis.linear_cryptanalysis.LinearCryptanalysis.generate_encryption_pairs">generate_encryption_pairs</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

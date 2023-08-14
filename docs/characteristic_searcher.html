@@ -1,0 +1,1566 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>cryptanalysis.characteristic_searcher API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>cryptanalysis.characteristic_searcher</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">from collections import defaultdict
+from math import log2
+from itertools import islice
+from z3 import Optimize, BitVec, sat, Concat, And, Not, Implies, Extract, Function, BitVecSort, RealSort, Product
+from .utils import calculate_linear_bias, calculate_difference_table
+
+__all__ = [&#34;CharacteristicSearcher&#34;]
+
+
+def all_smt(solver, initial_terms):
+    def block_term(solver, model, term):
+        solver.add(term != model.eval(term))
+
+    def fix_term(solver, model, term):
+        solver.add(term == model.eval(term))
+
+    def all_smt_rec(terms):
+        if sat == solver.check():
+            model = solver.model()
+            yield model
+            for i in range(len(terms)):
+                solver.push()
+                block_term(solver, model, terms[i])
+                for j in range(i):
+                    fix_term(solver, model, terms[j])
+                yield from all_smt_rec(terms[i:])
+                solver.pop()
+    yield from all_smt_rec(list(initial_terms))
+
+
+class CharacteristicSearcher:
+    &#34;&#34;&#34;A class for finding characteristics (linear or differential) of a substitution
+    permutation network with provided S-box and P-box with a given number of rounds.
+
+    Attributes:
+        sbox: A list representing the substitution box.
+        pbox: A list representing the permutation box.
+        num_rounds: An integer representing the number of rounds.
+        block_size: An integer representing the number of bits in the block.
+        box_size: An integer representing the size of the S-box in bits.
+        num_blocks: An integer representing the number of sboxes in a block
+        mode: A string representing the mode, which can be &#39;linear&#39; or &#39;differential&#39;.
+        bias: A Counter dictionary representing linear or differential bias
+              of sbox input/output pairs
+        solutions: A dictionary containing list of valid characteristic masks for a given
+            set of included and excluded blocks
+        solver: SMT solver (optimize) instance to search the characteristics
+    &#34;&#34;&#34;
+    def __init__(self, sbox, pbox, num_rounds, mode=&#39;linear&#39;):
+        &#34;&#34;&#34;Initializes the CharacteristicSolver with the given sbox, pbox, num_rounds and mode.
+
+        Args:
+            sbox (list): The substitution box.
+            pbox (list): The permutation box.
+            num_rounds (int): The number of rounds.
+            mode (str, optional): The mode of operation. Defaults to &#39;linear&#39;.
+        &#34;&#34;&#34;
+        self.sbox = sbox
+        self.pbox = pbox
+        self.num_rounds = num_rounds
+        self.block_size = len(pbox)
+        self.box_size = int(log2(len(sbox)))
+        self.num_blocks = len(pbox) // self.box_size
+        self.mode = mode
+        if mode == &#39;linear&#39;:
+            self.bias = calculate_linear_bias(sbox)
+        elif mode == &#39;differential&#39;:
+            self.bias = calculate_difference_table(sbox)
+        self.solutions = defaultdict(list)
+        self.solver = Optimize()
+        self.prune_level = 0
+        self.sboxf = None
+        self.inps = None
+        self.oups = None
+        self.bv_inp_masks = None
+        self.bv_oup_masks = None
+        self.objectives = None
+
+    def initialize_sbox_structure(self):
+        &#34;&#34;&#34;Initializes the S-box structure for the cryptographic solver.
+
+        This method sets up the structure of the S-box by creating an optimized solver,
+        initializing input and output bit vectors for each round, and adding
+        constraints for the solver. It also creates a concatenated view of the input
+        and output layers for further processing.
+        &#34;&#34;&#34;
+        n = self.box_size
+        self.inps = [[BitVec(&#39;r{}_i{}&#39;.format(r, i), n)
+                      for i in range(self.num_blocks)] for r in range(self.num_rounds + 1)]
+        self.oups = [[BitVec(&#39;r{}_o{}&#39;.format(r, i), n) for i in range(self.num_blocks)]
+                     for r in range(self.num_rounds)]
+        # permutation of output of sboxes are inputs of next round
+        for i in range(self.num_rounds):
+            if self.num_blocks == 1:
+                self.solver.add(self.bitvec_permutation(
+                    self.oups[i][0], self.inps[i + 1][0]))
+            else:
+                self.solver.add(self.bitvec_permutation(
+                    Concat(self.oups[i]), Concat(self.inps[i + 1])))
+        # all first layer inputs should not be 0
+        self.solver.add(
+            Not(And(*[self.inps[0][i] == 0 for i in range(self.num_blocks)])))
+        for r in range(self.num_rounds):
+            for i in range(self.num_blocks):
+                # if sbox has input, it should have output
+                self.solver.add(
+                    Implies(
+                        self.inps[r][i] != 0,
+                        self.oups[r][i] != 0))
+                # if sbox has no input it should not have any output
+                self.solver.add(
+                    Implies(
+                        self.inps[r][i] == 0,
+                        self.oups[r][i] == 0))
+
+        # just a concatanated view of the input and output layers
+        if self.num_blocks == 1:
+            self.bv_inp_masks = [self.inps[i][0]
+                                 for i in range(self.num_rounds + 1)]
+            self.bv_oup_masks = [self.oups[i][0]
+                                 for i in range(self.num_rounds)]
+        else:
+            self.bv_inp_masks = [Concat(self.inps[i])
+                                 for i in range(self.num_rounds + 1)]
+            self.bv_oup_masks = [Concat(self.oups[i])
+                                 for i in range(self.num_rounds)]
+
+    def bitvec_permutation(self, inp, oup):
+        &#34;&#34;&#34;Performs bit vector permutation based on pbox.
+
+        Args:
+            inp (BitVec): The input bit vector.
+            oup (BitVec): The output bit vector.
+
+        Returns:
+            list: A list of constraints for the permutation.
+        &#34;&#34;&#34;
+        pn = len(self.pbox)
+        constraints = []
+        for i, v in enumerate(self.pbox):
+            constraints.append(
+                Extract(pn - 1 - i, pn - 1 - i, inp) ==
+                Extract(pn - 1 - v, pn - 1 - v, oup)
+            )
+        return constraints
+
+    def initialize_objectives(self):
+        &#34;&#34;&#34;Initializes the objective functions for the cryptographic solver.
+
+        The method sets up four types of objective functions: &#39;original_linear&#39;,
+        &#39;reduced&#39;, &#39;differential&#39;, and &#39;linear&#39;. These objective functions are
+        used to guide the solver in finding the optimal solution. Each objective
+        function is associated with a lambda function that calculates the objective
+        value for a given number of rounds.
+        &#39;reduced&#39; objective is called for both linear and differential search
+        Other objective functions are just there for reference and easy evaluation
+        of bias directly from the model
+        &#34;&#34;&#34;
+        self.objectives = {
+            # the actual objective, which is just product of bias [0,1/2]
+            &#39;original_linear&#39;: lambda rounds: 2**(self.num_blocks * rounds - 1) * Product([self.sboxf(
+                self.inps[i // self.num_blocks][i % self.num_blocks],
+                self.oups[i // self.num_blocks][i % self.num_blocks])
+                for i in range(self.num_blocks * rounds)
+            ]),
+            # reducing optimization problem of product to sums
+            &#39;reduced&#39;: lambda rounds: sum([
+                self.sboxf(
+                    self.inps[i // self.num_blocks][i % self.num_blocks],
+                    self.oups[i // self.num_blocks][i % self.num_blocks])
+                for i in range(self.num_blocks * rounds)
+            ]),
+            # objective when the input biases are [0,2**n] just the final
+            # division
+            &#39;differential&#39;: lambda rounds: Product([
+                self.sboxf(
+                    self.inps[i // self.num_blocks][i % self.num_blocks],
+                    self.oups[i // self.num_blocks][i % self.num_blocks])
+                for i in range(self.num_blocks * rounds)
+            ]) / ((2**self.box_size)**(self.num_blocks * rounds)),
+            &#39;linear&#39;: lambda rounds: 2**(self.num_blocks * rounds - 1) * Product([
+                self.sboxf(
+                    self.inps[i // self.num_blocks][i % self.num_blocks],
+                    self.oups[i // self.num_blocks][i % self.num_blocks])
+                for i in range(self.num_blocks * rounds)
+            ]) / ((2**self.box_size)**(self.num_blocks * rounds))
+        }
+
+    def add_bias_constraints(self, prune_level):
+        &#34;&#34;&#34;Adds bias constraints to the solver based on the biases of the S-box.
+
+        This method adds constraints to the solver that are based on the biases of the S-box.
+        If the bias of a particular input-output pair is greater than or equal to 2**prune_level,
+        the method adds a constraint that the S-box function of the pair is equal to the bias.
+        Otherwise, it adds a constraint that the S-box function of the pair is 0. This helps in
+        pruning the search space of the solver.
+
+        Args:
+            prune_level (int): The level at which to prune the biases.
+        &#34;&#34;&#34;
+        for i in range(2**self.box_size):
+            for j in range(2**self.box_size):
+                # just some pruning of very small biases
+                if self.bias[(i, j)] &gt;= 2**(prune_level):
+                    self.solver.add(self.sboxf(i, j) == self.bias[(i, j)])
+                else:
+                    self.solver.add(self.sboxf(i, j) == 0)
+
+        for r in range(self.num_rounds):
+            for i in range(self.num_blocks):
+                # skip taking input/outputs with no bias
+                self.solver.add(
+                    Implies(
+                        And(self.inps[r][i] != 0, self.oups[r][i] != 0),
+                        self.sboxf(self.inps[r][i], self.oups[r][i]) != 0
+                    )
+                )
+
+    def init_characteristic_solver(self, prune_level=-1):
+        &#34;&#34;&#34;Initializes the S-box structure, S-box function, objective functions, and pruning level.
+
+        This method initializes the structure of the S-box, the S-box function,
+        and the objective functions for the solver. It also sets the pruning level
+        for the solver. If no pruning level is provided, the method will search for
+        the best pruning level.
+
+        Args:
+            prune_level (int, optional): The level at which to prune the biases.
+            If not provided or less than 0, the method will search for the best pruning level.
+        &#34;&#34;&#34;
+        self.initialize_sbox_structure()
+        self.sboxf = Function(
+            &#39;sbox&#39;, BitVecSort(
+                self.box_size), BitVecSort(
+                self.box_size), RealSort())
+        self.initialize_objectives()
+        assert self.solver.check()
+
+        if prune_level &lt; 0:
+            print(&#34;searching best pruning level&#34;)
+            low, high = 0, len(self.sbox) // 4
+            while low &lt;= high:
+                mid = (low + high) // 2
+                print(&#34;trying pruning&#34;, mid)
+                self.solver.push()
+                self.solver.set(timeout=10000)
+                self.add_bias_constraints(mid)
+                if self.solver.check() == sat:
+                    print(&#34;success&#34;)
+                    low = mid + 1
+                else:
+                    print(&#34;failure&#34;)
+                    high = mid - 1
+                self.solver.pop()
+            self.solver.set(timeout=0)
+            print(&#34;best pruning&#34;, high)
+            self.prune_level = high
+            self.add_bias_constraints(high)
+        else:
+            self.add_bias_constraints(prune_level)
+            if self.solver.check() == sat:
+                self.prune_level = prune_level
+            else:
+                print(&#34;Provided pruning level unsat, searching optimal pruning&#34;)
+                self.init_characteristic_solver(-1)  # search best pruning
+
+    def solve_for_blocks(self, include_blocks=(), exclude_blocks=(),
+            num_rounds=0,
+            num_sols=1,
+            display_paths=True):
+        &#34;&#34;&#34;Solves the characteristic for the specified blocks and maximizes the objective function.
+
+            This method searches the characteristic for the specified blocks,
+            maximizes the objective function, and returns the solutions.
+            The blocks to include and exclude in the characteristic can be specified.
+            The number of rounds and the number of solutions can also be specified.
+
+            Args:
+                include_blocks (list, optional): The blocks to definitely include in the characteristic.
+                exclude_blocks (list, optional): The blocks to definitely exclude in the characteristic.
+                num_rounds (int, optional): The number of rounds for which to solve the characteristic.
+                                             If not provided or 0, the number of rounds will be set to the
+                                             number of rounds of the solver.
+                num_sols (int, optional): The number of solutions to return.
+                display_paths (bool, optional): Whether to display the paths of the solutions.
+
+            Returns:
+                list: A list of tuples. Each tuple contains the input masks, the output masks, and the
+                      calculated bias for a solution.
+            &#34;&#34;&#34;
+        if num_rounds == 0:
+            num_rounds = self.num_rounds
+        else:
+            # cap to initialized struct
+            num_rounds = min(self.num_rounds, num_rounds)
+        while len(self.solver.objectives()):
+            self.solver.pop()  # remove any previous include/exclude block constraints
+        self.solver.push()  # set this as the checkpoint
+        # specify which blocks to definitely include in the characteristic
+        for i in include_blocks:
+            self.solver.add(self.inps[num_rounds - 1][i] != 0)
+        # specify which blocks to definitely exclude in the characteristic
+        for i in exclude_blocks:
+            self.solver.add(self.inps[num_rounds - 1][i] == 0)
+        # print(include_blocks, exclude_blocks)
+        # if a block is neither in include_blocks or exclude_blocks
+        # the solver finds the best path which may or may not set it to active
+        self.solver.maximize(self.objectives[&#39;reduced&#39;](num_rounds))
+        solutions = self.get_masks(num_rounds, num_sols, display_paths)
+        self.solutions[(tuple(sorted(include_blocks)),
+                        tuple(sorted(exclude_blocks)))].extend(solutions)
+        return [(inp_masks[0], inp_masks[-1], calc_bias)
+                for inp_masks, _, calc_bias, _ in solutions]
+
+    def search_best_masks(self, tolerance=1, choose_best=10, display_paths=True):
+        &#34;&#34;&#34;Searches for the best masks with the highest total bias and limited undiscovered active blocks.
+
+        This method searches for the best masks with the highest total bias and a limited number
+        of undiscovered active blocks.
+
+        Args:
+            tolerance (int, optional): The maximum number of undiscovered active blocks allowed.
+            choose_best (int, optional): The number of best masks to choose from.
+            display_paths (bool, optional): Whether to display the characteristic paths
+                                        (containing the bits involved) of the solutions.
+
+        Returns:
+            list: A list of tuples. Each tuple contains the input masks, the output masks, and the
+                  total bias for a solution.
+        &#34;&#34;&#34;
+
+        self.init_characteristic_solver()
+        nr = self.num_rounds
+        discovered = [False for _ in range(self.num_blocks)]
+
+        def istolerable(x):
+            return sum((not i) and j
+                       for i, j in zip(discovered, x[3])) in range(1, tolerance + 1)
+        masks = []
+        while self.solver.check() == sat:
+            curr_masks = self.get_masks(self.num_rounds, choose_best, display_paths=False)
+            for i in curr_masks:
+                self.solutions[i[2]].append(i)
+            curr_masks = list(filter(istolerable, curr_masks))
+            if len(curr_masks) &gt; 0:
+                inp_masks, oup_masks, total_bias, active = max(
+                    curr_masks, key=lambda x: (x[2], -sum(x[3])))
+                if display_paths:
+                    self.print_bitrelations(inp_masks, oup_masks)
+                    print(&#34;total bias:&#34;, total_bias)
+                    print()
+                masks.append((inp_masks[0], inp_masks[nr - 1], total_bias))
+                for i, v in enumerate(discovered):
+                    if (not v) and active[i]:
+                        discovered[i] = True
+                print(&#34;discovered&#34;, &#34;&#34;.join(map(lambda x: str(int(x)), discovered)))
+                # dont discover biases where all the active blocks come from discovered blocks
+                # i.e. if all the active blocks come from discovered blocks,
+                # it means, all the undiscovered blocks are inactive
+                # i.e it should not be the case where all the undiscovered blocks are
+                # inactive i.e 0
+                self.solver.add(Not(And(
+                        [self.inps[nr - 1][i] == 0 for i, v in enumerate(discovered) if not v]
+                        )))
+        return masks
+
+    def search_exclusive_masks(self, prune_level=-1, repeat=1):
+        &#34;&#34;&#34;Searches for the masks for each block by including only one block and excluding all the others.
+
+        This method searches for the masks for each block by including only one block and excluding
+        all the others.
+
+        Args:
+            prune_level (int, optional): The level at which to prune the biases.
+            repeat (int, optional): The number of times to repeat the search for each block.
+
+        Returns:
+            list: A list of tuples. Each tuple contains the input masks, the output masks, and the
+                  total bias for a solution.
+        &#34;&#34;&#34;
+        self.init_characteristic_solver(prune_level)
+        masks = []
+        for i in range(self.num_blocks):
+            include_blocks = {i}
+            exclude_blocks = set(range(self.num_blocks)) - include_blocks
+            masks.extend(self.solve_for_blocks(include_blocks, exclude_blocks, num_sols=repeat))
+        return masks
+
+    def get_masks(self, num_rounds, n=1, display_paths=True):
+        &#34;&#34;&#34;Returns the input masks, output masks, total bias, and active blocks of the solutions.
+
+        This method returns the input masks, output masks, total bias, and active blocks of the solutions.
+
+        Args:
+            num_rounds (int): The number of rounds for which to get the masks.
+            n (int, optional): The number of masks to get.
+            display_paths (bool, optional): Whether to display the paths of the solutions.
+
+        Returns:
+            list: A list of tuples. Each tuple contains the input masks, the output masks, the total bias,
+                  and the active blocks for a solution.
+        &#34;&#34;&#34;
+        masks = []
+        for m in islice(all_smt(self.solver, [self.bv_inp_masks[num_rounds - 1]]), n):
+            inp_masks = [m.eval(i).as_long()
+                         for i in self.bv_inp_masks[:num_rounds]]
+            oup_masks = [m.eval(i).as_long()
+                         for i in self.bv_oup_masks[:num_rounds]]
+            total_bias = m.eval(
+                self.objectives[self.mode](num_rounds)).as_fraction()
+            active = [m.eval(i).as_long() != 0 for i in self.inps[num_rounds - 1]]
+            if display_paths:
+                self.print_bitrelations(inp_masks, oup_masks)
+                print(&#34;total bias:&#34;, total_bias)
+                print()
+            masks.append((inp_masks, oup_masks, total_bias, active))
+        return masks
+
+    def print_bitrelations(self, inp_masks, out_masks):
+        &#34;&#34;&#34;
+        Print the input and output masks of a block cipher in a formatted manner.
+
+        :param inp_masks: List of integers, input masks for each round.
+        :param out_masks: List of integers, output masks for each round.
+        &#34;&#34;&#34;
+        s = self.box_size
+        n = self.num_blocks * s
+
+        def bin_sep(val):
+            v = bin(val)[2:].zfill(n)
+            return &#34;|&#34;.join(v[i:i + s] for i in range(0, n, s))
+
+        rounds = len(out_masks)
+        for i in range(rounds):
+            imask, omask = inp_masks[i], out_masks[i]
+            print(bin_sep(imask))
+            print(&#39; &#39;.join([&#39;-&#39; * s] * (n // s)))
+            print(bin_sep(omask))
+            print()
+        print(bin_sep(inp_masks[-1]))</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="cryptanalysis.characteristic_searcher.CharacteristicSearcher"><code class="flex name class">
+<span>class <span class="ident">CharacteristicSearcher</span></span>
+<span>(</span><span>sbox, pbox, num_rounds, mode='linear')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A class for finding characteristics (linear or differential) of a substitution
+permutation network with provided S-box and P-box with a given number of rounds.</p>
+<h2 id="attributes">Attributes</h2>
+<dl>
+<dt><strong><code>sbox</code></strong></dt>
+<dd>A list representing the substitution box.</dd>
+<dt><strong><code>pbox</code></strong></dt>
+<dd>A list representing the permutation box.</dd>
+<dt><strong><code>num_rounds</code></strong></dt>
+<dd>An integer representing the number of rounds.</dd>
+<dt><strong><code>block_size</code></strong></dt>
+<dd>An integer representing the number of bits in the block.</dd>
+<dt><strong><code>box_size</code></strong></dt>
+<dd>An integer representing the size of the S-box in bits.</dd>
+<dt><strong><code>num_blocks</code></strong></dt>
+<dd>An integer representing the number of sboxes in a block</dd>
+<dt><strong><code>mode</code></strong></dt>
+<dd>A string representing the mode, which can be 'linear' or 'differential'.</dd>
+<dt><strong><code>bias</code></strong></dt>
+<dd>A Counter dictionary representing linear or differential bias
+of sbox input/output pairs</dd>
+<dt><strong><code>solutions</code></strong></dt>
+<dd>A dictionary containing list of valid characteristic masks for a given
+set of included and excluded blocks</dd>
+<dt><strong><code>solver</code></strong></dt>
+<dd>SMT solver (optimize) instance to search the characteristics</dd>
+</dl>
+<p>Initializes the CharacteristicSolver with the given sbox, pbox, num_rounds and mode.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sbox</code></strong> :&ensp;<code>list</code></dt>
+<dd>The substitution box.</dd>
+<dt><strong><code>pbox</code></strong> :&ensp;<code>list</code></dt>
+<dd>The permutation box.</dd>
+<dt><strong><code>num_rounds</code></strong> :&ensp;<code>int</code></dt>
+<dd>The number of rounds.</dd>
+<dt><strong><code>mode</code></strong> :&ensp;<code>str</code>, optional</dt>
+<dd>The mode of operation. Defaults to 'linear'.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class CharacteristicSearcher:
+    &#34;&#34;&#34;A class for finding characteristics (linear or differential) of a substitution
+    permutation network with provided S-box and P-box with a given number of rounds.
+
+    Attributes:
+        sbox: A list representing the substitution box.
+        pbox: A list representing the permutation box.
+        num_rounds: An integer representing the number of rounds.
+        block_size: An integer representing the number of bits in the block.
+        box_size: An integer representing the size of the S-box in bits.
+        num_blocks: An integer representing the number of sboxes in a block
+        mode: A string representing the mode, which can be &#39;linear&#39; or &#39;differential&#39;.
+        bias: A Counter dictionary representing linear or differential bias
+              of sbox input/output pairs
+        solutions: A dictionary containing list of valid characteristic masks for a given
+            set of included and excluded blocks
+        solver: SMT solver (optimize) instance to search the characteristics
+    &#34;&#34;&#34;
+    def __init__(self, sbox, pbox, num_rounds, mode=&#39;linear&#39;):
+        &#34;&#34;&#34;Initializes the CharacteristicSolver with the given sbox, pbox, num_rounds and mode.
+
+        Args:
+            sbox (list): The substitution box.
+            pbox (list): The permutation box.
+            num_rounds (int): The number of rounds.
+            mode (str, optional): The mode of operation. Defaults to &#39;linear&#39;.
+        &#34;&#34;&#34;
+        self.sbox = sbox
+        self.pbox = pbox
+        self.num_rounds = num_rounds
+        self.block_size = len(pbox)
+        self.box_size = int(log2(len(sbox)))
+        self.num_blocks = len(pbox) // self.box_size
+        self.mode = mode
+        if mode == &#39;linear&#39;:
+            self.bias = calculate_linear_bias(sbox)
+        elif mode == &#39;differential&#39;:
+            self.bias = calculate_difference_table(sbox)
+        self.solutions = defaultdict(list)
+        self.solver = Optimize()
+        self.prune_level = 0
+        self.sboxf = None
+        self.inps = None
+        self.oups = None
+        self.bv_inp_masks = None
+        self.bv_oup_masks = None
+        self.objectives = None
+
+    def initialize_sbox_structure(self):
+        &#34;&#34;&#34;Initializes the S-box structure for the cryptographic solver.
+
+        This method sets up the structure of the S-box by creating an optimized solver,
+        initializing input and output bit vectors for each round, and adding
+        constraints for the solver. It also creates a concatenated view of the input
+        and output layers for further processing.
+        &#34;&#34;&#34;
+        n = self.box_size
+        self.inps = [[BitVec(&#39;r{}_i{}&#39;.format(r, i), n)
+                      for i in range(self.num_blocks)] for r in range(self.num_rounds + 1)]
+        self.oups = [[BitVec(&#39;r{}_o{}&#39;.format(r, i), n) for i in range(self.num_blocks)]
+                     for r in range(self.num_rounds)]
+        # permutation of output of sboxes are inputs of next round
+        for i in range(self.num_rounds):
+            if self.num_blocks == 1:
+                self.solver.add(self.bitvec_permutation(
+                    self.oups[i][0], self.inps[i + 1][0]))
+            else:
+                self.solver.add(self.bitvec_permutation(
+                    Concat(self.oups[i]), Concat(self.inps[i + 1])))
+        # all first layer inputs should not be 0
+        self.solver.add(
+            Not(And(*[self.inps[0][i] == 0 for i in range(self.num_blocks)])))
+        for r in range(self.num_rounds):
+            for i in range(self.num_blocks):
+                # if sbox has input, it should have output
+                self.solver.add(
+                    Implies(
+                        self.inps[r][i] != 0,
+                        self.oups[r][i] != 0))
+                # if sbox has no input it should not have any output
+                self.solver.add(
+                    Implies(
+                        self.inps[r][i] == 0,
+                        self.oups[r][i] == 0))
+
+        # just a concatanated view of the input and output layers
+        if self.num_blocks == 1:
+            self.bv_inp_masks = [self.inps[i][0]
+                                 for i in range(self.num_rounds + 1)]
+            self.bv_oup_masks = [self.oups[i][0]
+                                 for i in range(self.num_rounds)]
+        else:
+            self.bv_inp_masks = [Concat(self.inps[i])
+                                 for i in range(self.num_rounds + 1)]
+            self.bv_oup_masks = [Concat(self.oups[i])
+                                 for i in range(self.num_rounds)]
+
+    def bitvec_permutation(self, inp, oup):
+        &#34;&#34;&#34;Performs bit vector permutation based on pbox.
+
+        Args:
+            inp (BitVec): The input bit vector.
+            oup (BitVec): The output bit vector.
+
+        Returns:
+            list: A list of constraints for the permutation.
+        &#34;&#34;&#34;
+        pn = len(self.pbox)
+        constraints = []
+        for i, v in enumerate(self.pbox):
+            constraints.append(
+                Extract(pn - 1 - i, pn - 1 - i, inp) ==
+                Extract(pn - 1 - v, pn - 1 - v, oup)
+            )
+        return constraints
+
+    def initialize_objectives(self):
+        &#34;&#34;&#34;Initializes the objective functions for the cryptographic solver.
+
+        The method sets up four types of objective functions: &#39;original_linear&#39;,
+        &#39;reduced&#39;, &#39;differential&#39;, and &#39;linear&#39;. These objective functions are
+        used to guide the solver in finding the optimal solution. Each objective
+        function is associated with a lambda function that calculates the objective
+        value for a given number of rounds.
+        &#39;reduced&#39; objective is called for both linear and differential search
+        Other objective functions are just there for reference and easy evaluation
+        of bias directly from the model
+        &#34;&#34;&#34;
+        self.objectives = {
+            # the actual objective, which is just product of bias [0,1/2]
+            &#39;original_linear&#39;: lambda rounds: 2**(self.num_blocks * rounds - 1) * Product([self.sboxf(
+                self.inps[i // self.num_blocks][i % self.num_blocks],
+                self.oups[i // self.num_blocks][i % self.num_blocks])
+                for i in range(self.num_blocks * rounds)
+            ]),
+            # reducing optimization problem of product to sums
+            &#39;reduced&#39;: lambda rounds: sum([
+                self.sboxf(
+                    self.inps[i // self.num_blocks][i % self.num_blocks],
+                    self.oups[i // self.num_blocks][i % self.num_blocks])
+                for i in range(self.num_blocks * rounds)
+            ]),
+            # objective when the input biases are [0,2**n] just the final
+            # division
+            &#39;differential&#39;: lambda rounds: Product([
+                self.sboxf(
+                    self.inps[i // self.num_blocks][i % self.num_blocks],
+                    self.oups[i // self.num_blocks][i % self.num_blocks])
+                for i in range(self.num_blocks * rounds)
+            ]) / ((2**self.box_size)**(self.num_blocks * rounds)),
+            &#39;linear&#39;: lambda rounds: 2**(self.num_blocks * rounds - 1) * Product([
+                self.sboxf(
+                    self.inps[i // self.num_blocks][i % self.num_blocks],
+                    self.oups[i // self.num_blocks][i % self.num_blocks])
+                for i in range(self.num_blocks * rounds)
+            ]) / ((2**self.box_size)**(self.num_blocks * rounds))
+        }
+
+    def add_bias_constraints(self, prune_level):
+        &#34;&#34;&#34;Adds bias constraints to the solver based on the biases of the S-box.
+
+        This method adds constraints to the solver that are based on the biases of the S-box.
+        If the bias of a particular input-output pair is greater than or equal to 2**prune_level,
+        the method adds a constraint that the S-box function of the pair is equal to the bias.
+        Otherwise, it adds a constraint that the S-box function of the pair is 0. This helps in
+        pruning the search space of the solver.
+
+        Args:
+            prune_level (int): The level at which to prune the biases.
+        &#34;&#34;&#34;
+        for i in range(2**self.box_size):
+            for j in range(2**self.box_size):
+                # just some pruning of very small biases
+                if self.bias[(i, j)] &gt;= 2**(prune_level):
+                    self.solver.add(self.sboxf(i, j) == self.bias[(i, j)])
+                else:
+                    self.solver.add(self.sboxf(i, j) == 0)
+
+        for r in range(self.num_rounds):
+            for i in range(self.num_blocks):
+                # skip taking input/outputs with no bias
+                self.solver.add(
+                    Implies(
+                        And(self.inps[r][i] != 0, self.oups[r][i] != 0),
+                        self.sboxf(self.inps[r][i], self.oups[r][i]) != 0
+                    )
+                )
+
+    def init_characteristic_solver(self, prune_level=-1):
+        &#34;&#34;&#34;Initializes the S-box structure, S-box function, objective functions, and pruning level.
+
+        This method initializes the structure of the S-box, the S-box function,
+        and the objective functions for the solver. It also sets the pruning level
+        for the solver. If no pruning level is provided, the method will search for
+        the best pruning level.
+
+        Args:
+            prune_level (int, optional): The level at which to prune the biases.
+            If not provided or less than 0, the method will search for the best pruning level.
+        &#34;&#34;&#34;
+        self.initialize_sbox_structure()
+        self.sboxf = Function(
+            &#39;sbox&#39;, BitVecSort(
+                self.box_size), BitVecSort(
+                self.box_size), RealSort())
+        self.initialize_objectives()
+        assert self.solver.check()
+
+        if prune_level &lt; 0:
+            print(&#34;searching best pruning level&#34;)
+            low, high = 0, len(self.sbox) // 4
+            while low &lt;= high:
+                mid = (low + high) // 2
+                print(&#34;trying pruning&#34;, mid)
+                self.solver.push()
+                self.solver.set(timeout=10000)
+                self.add_bias_constraints(mid)
+                if self.solver.check() == sat:
+                    print(&#34;success&#34;)
+                    low = mid + 1
+                else:
+                    print(&#34;failure&#34;)
+                    high = mid - 1
+                self.solver.pop()
+            self.solver.set(timeout=0)
+            print(&#34;best pruning&#34;, high)
+            self.prune_level = high
+            self.add_bias_constraints(high)
+        else:
+            self.add_bias_constraints(prune_level)
+            if self.solver.check() == sat:
+                self.prune_level = prune_level
+            else:
+                print(&#34;Provided pruning level unsat, searching optimal pruning&#34;)
+                self.init_characteristic_solver(-1)  # search best pruning
+
+    def solve_for_blocks(self, include_blocks=(), exclude_blocks=(),
+            num_rounds=0,
+            num_sols=1,
+            display_paths=True):
+        &#34;&#34;&#34;Solves the characteristic for the specified blocks and maximizes the objective function.
+
+            This method searches the characteristic for the specified blocks,
+            maximizes the objective function, and returns the solutions.
+            The blocks to include and exclude in the characteristic can be specified.
+            The number of rounds and the number of solutions can also be specified.
+
+            Args:
+                include_blocks (list, optional): The blocks to definitely include in the characteristic.
+                exclude_blocks (list, optional): The blocks to definitely exclude in the characteristic.
+                num_rounds (int, optional): The number of rounds for which to solve the characteristic.
+                                             If not provided or 0, the number of rounds will be set to the
+                                             number of rounds of the solver.
+                num_sols (int, optional): The number of solutions to return.
+                display_paths (bool, optional): Whether to display the paths of the solutions.
+
+            Returns:
+                list: A list of tuples. Each tuple contains the input masks, the output masks, and the
+                      calculated bias for a solution.
+            &#34;&#34;&#34;
+        if num_rounds == 0:
+            num_rounds = self.num_rounds
+        else:
+            # cap to initialized struct
+            num_rounds = min(self.num_rounds, num_rounds)
+        while len(self.solver.objectives()):
+            self.solver.pop()  # remove any previous include/exclude block constraints
+        self.solver.push()  # set this as the checkpoint
+        # specify which blocks to definitely include in the characteristic
+        for i in include_blocks:
+            self.solver.add(self.inps[num_rounds - 1][i] != 0)
+        # specify which blocks to definitely exclude in the characteristic
+        for i in exclude_blocks:
+            self.solver.add(self.inps[num_rounds - 1][i] == 0)
+        # print(include_blocks, exclude_blocks)
+        # if a block is neither in include_blocks or exclude_blocks
+        # the solver finds the best path which may or may not set it to active
+        self.solver.maximize(self.objectives[&#39;reduced&#39;](num_rounds))
+        solutions = self.get_masks(num_rounds, num_sols, display_paths)
+        self.solutions[(tuple(sorted(include_blocks)),
+                        tuple(sorted(exclude_blocks)))].extend(solutions)
+        return [(inp_masks[0], inp_masks[-1], calc_bias)
+                for inp_masks, _, calc_bias, _ in solutions]
+
+    def search_best_masks(self, tolerance=1, choose_best=10, display_paths=True):
+        &#34;&#34;&#34;Searches for the best masks with the highest total bias and limited undiscovered active blocks.
+
+        This method searches for the best masks with the highest total bias and a limited number
+        of undiscovered active blocks.
+
+        Args:
+            tolerance (int, optional): The maximum number of undiscovered active blocks allowed.
+            choose_best (int, optional): The number of best masks to choose from.
+            display_paths (bool, optional): Whether to display the characteristic paths
+                                        (containing the bits involved) of the solutions.
+
+        Returns:
+            list: A list of tuples. Each tuple contains the input masks, the output masks, and the
+                  total bias for a solution.
+        &#34;&#34;&#34;
+
+        self.init_characteristic_solver()
+        nr = self.num_rounds
+        discovered = [False for _ in range(self.num_blocks)]
+
+        def istolerable(x):
+            return sum((not i) and j
+                       for i, j in zip(discovered, x[3])) in range(1, tolerance + 1)
+        masks = []
+        while self.solver.check() == sat:
+            curr_masks = self.get_masks(self.num_rounds, choose_best, display_paths=False)
+            for i in curr_masks:
+                self.solutions[i[2]].append(i)
+            curr_masks = list(filter(istolerable, curr_masks))
+            if len(curr_masks) &gt; 0:
+                inp_masks, oup_masks, total_bias, active = max(
+                    curr_masks, key=lambda x: (x[2], -sum(x[3])))
+                if display_paths:
+                    self.print_bitrelations(inp_masks, oup_masks)
+                    print(&#34;total bias:&#34;, total_bias)
+                    print()
+                masks.append((inp_masks[0], inp_masks[nr - 1], total_bias))
+                for i, v in enumerate(discovered):
+                    if (not v) and active[i]:
+                        discovered[i] = True
+                print(&#34;discovered&#34;, &#34;&#34;.join(map(lambda x: str(int(x)), discovered)))
+                # dont discover biases where all the active blocks come from discovered blocks
+                # i.e. if all the active blocks come from discovered blocks,
+                # it means, all the undiscovered blocks are inactive
+                # i.e it should not be the case where all the undiscovered blocks are
+                # inactive i.e 0
+                self.solver.add(Not(And(
+                        [self.inps[nr - 1][i] == 0 for i, v in enumerate(discovered) if not v]
+                        )))
+        return masks
+
+    def search_exclusive_masks(self, prune_level=-1, repeat=1):
+        &#34;&#34;&#34;Searches for the masks for each block by including only one block and excluding all the others.
+
+        This method searches for the masks for each block by including only one block and excluding
+        all the others.
+
+        Args:
+            prune_level (int, optional): The level at which to prune the biases.
+            repeat (int, optional): The number of times to repeat the search for each block.
+
+        Returns:
+            list: A list of tuples. Each tuple contains the input masks, the output masks, and the
+                  total bias for a solution.
+        &#34;&#34;&#34;
+        self.init_characteristic_solver(prune_level)
+        masks = []
+        for i in range(self.num_blocks):
+            include_blocks = {i}
+            exclude_blocks = set(range(self.num_blocks)) - include_blocks
+            masks.extend(self.solve_for_blocks(include_blocks, exclude_blocks, num_sols=repeat))
+        return masks
+
+    def get_masks(self, num_rounds, n=1, display_paths=True):
+        &#34;&#34;&#34;Returns the input masks, output masks, total bias, and active blocks of the solutions.
+
+        This method returns the input masks, output masks, total bias, and active blocks of the solutions.
+
+        Args:
+            num_rounds (int): The number of rounds for which to get the masks.
+            n (int, optional): The number of masks to get.
+            display_paths (bool, optional): Whether to display the paths of the solutions.
+
+        Returns:
+            list: A list of tuples. Each tuple contains the input masks, the output masks, the total bias,
+                  and the active blocks for a solution.
+        &#34;&#34;&#34;
+        masks = []
+        for m in islice(all_smt(self.solver, [self.bv_inp_masks[num_rounds - 1]]), n):
+            inp_masks = [m.eval(i).as_long()
+                         for i in self.bv_inp_masks[:num_rounds]]
+            oup_masks = [m.eval(i).as_long()
+                         for i in self.bv_oup_masks[:num_rounds]]
+            total_bias = m.eval(
+                self.objectives[self.mode](num_rounds)).as_fraction()
+            active = [m.eval(i).as_long() != 0 for i in self.inps[num_rounds - 1]]
+            if display_paths:
+                self.print_bitrelations(inp_masks, oup_masks)
+                print(&#34;total bias:&#34;, total_bias)
+                print()
+            masks.append((inp_masks, oup_masks, total_bias, active))
+        return masks
+
+    def print_bitrelations(self, inp_masks, out_masks):
+        &#34;&#34;&#34;
+        Print the input and output masks of a block cipher in a formatted manner.
+
+        :param inp_masks: List of integers, input masks for each round.
+        :param out_masks: List of integers, output masks for each round.
+        &#34;&#34;&#34;
+        s = self.box_size
+        n = self.num_blocks * s
+
+        def bin_sep(val):
+            v = bin(val)[2:].zfill(n)
+            return &#34;|&#34;.join(v[i:i + s] for i in range(0, n, s))
+
+        rounds = len(out_masks)
+        for i in range(rounds):
+            imask, omask = inp_masks[i], out_masks[i]
+            print(bin_sep(imask))
+            print(&#39; &#39;.join([&#39;-&#39; * s] * (n // s)))
+            print(bin_sep(omask))
+            print()
+        print(bin_sep(inp_masks[-1]))</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="cryptanalysis.characteristic_searcher.CharacteristicSearcher.add_bias_constraints"><code class="name flex">
+<span>def <span class="ident">add_bias_constraints</span></span>(<span>self, prune_level)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Adds bias constraints to the solver based on the biases of the S-box.</p>
+<p>This method adds constraints to the solver that are based on the biases of the S-box.
+If the bias of a particular input-output pair is greater than or equal to 2**prune_level,
+the method adds a constraint that the S-box function of the pair is equal to the bias.
+Otherwise, it adds a constraint that the S-box function of the pair is 0. This helps in
+pruning the search space of the solver.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>prune_level</code></strong> :&ensp;<code>int</code></dt>
+<dd>The level at which to prune the biases.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_bias_constraints(self, prune_level):
+    &#34;&#34;&#34;Adds bias constraints to the solver based on the biases of the S-box.
+
+    This method adds constraints to the solver that are based on the biases of the S-box.
+    If the bias of a particular input-output pair is greater than or equal to 2**prune_level,
+    the method adds a constraint that the S-box function of the pair is equal to the bias.
+    Otherwise, it adds a constraint that the S-box function of the pair is 0. This helps in
+    pruning the search space of the solver.
+
+    Args:
+        prune_level (int): The level at which to prune the biases.
+    &#34;&#34;&#34;
+    for i in range(2**self.box_size):
+        for j in range(2**self.box_size):
+            # just some pruning of very small biases
+            if self.bias[(i, j)] &gt;= 2**(prune_level):
+                self.solver.add(self.sboxf(i, j) == self.bias[(i, j)])
+            else:
+                self.solver.add(self.sboxf(i, j) == 0)
+
+    for r in range(self.num_rounds):
+        for i in range(self.num_blocks):
+            # skip taking input/outputs with no bias
+            self.solver.add(
+                Implies(
+                    And(self.inps[r][i] != 0, self.oups[r][i] != 0),
+                    self.sboxf(self.inps[r][i], self.oups[r][i]) != 0
+                )
+            )</code></pre>
+</details>
+</dd>
+<dt id="cryptanalysis.characteristic_searcher.CharacteristicSearcher.bitvec_permutation"><code class="name flex">
+<span>def <span class="ident">bitvec_permutation</span></span>(<span>self, inp, oup)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Performs bit vector permutation based on pbox.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>inp</code></strong> :&ensp;<code>BitVec</code></dt>
+<dd>The input bit vector.</dd>
+<dt><strong><code>oup</code></strong> :&ensp;<code>BitVec</code></dt>
+<dd>The output bit vector.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>A list of constraints for the permutation.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def bitvec_permutation(self, inp, oup):
+    &#34;&#34;&#34;Performs bit vector permutation based on pbox.
+
+    Args:
+        inp (BitVec): The input bit vector.
+        oup (BitVec): The output bit vector.
+
+    Returns:
+        list: A list of constraints for the permutation.
+    &#34;&#34;&#34;
+    pn = len(self.pbox)
+    constraints = []
+    for i, v in enumerate(self.pbox):
+        constraints.append(
+            Extract(pn - 1 - i, pn - 1 - i, inp) ==
+            Extract(pn - 1 - v, pn - 1 - v, oup)
+        )
+    return constraints</code></pre>
+</details>
+</dd>
+<dt id="cryptanalysis.characteristic_searcher.CharacteristicSearcher.get_masks"><code class="name flex">
+<span>def <span class="ident">get_masks</span></span>(<span>self, num_rounds, n=1, display_paths=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the input masks, output masks, total bias, and active blocks of the solutions.</p>
+<p>This method returns the input masks, output masks, total bias, and active blocks of the solutions.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>num_rounds</code></strong> :&ensp;<code>int</code></dt>
+<dd>The number of rounds for which to get the masks.</dd>
+<dt><strong><code>n</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The number of masks to get.</dd>
+<dt><strong><code>display_paths</code></strong> :&ensp;<code>bool</code>, optional</dt>
+<dd>Whether to display the paths of the solutions.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>A list of tuples. Each tuple contains the input masks, the output masks, the total bias,
+and the active blocks for a solution.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_masks(self, num_rounds, n=1, display_paths=True):
+    &#34;&#34;&#34;Returns the input masks, output masks, total bias, and active blocks of the solutions.
+
+    This method returns the input masks, output masks, total bias, and active blocks of the solutions.
+
+    Args:
+        num_rounds (int): The number of rounds for which to get the masks.
+        n (int, optional): The number of masks to get.
+        display_paths (bool, optional): Whether to display the paths of the solutions.
+
+    Returns:
+        list: A list of tuples. Each tuple contains the input masks, the output masks, the total bias,
+              and the active blocks for a solution.
+    &#34;&#34;&#34;
+    masks = []
+    for m in islice(all_smt(self.solver, [self.bv_inp_masks[num_rounds - 1]]), n):
+        inp_masks = [m.eval(i).as_long()
+                     for i in self.bv_inp_masks[:num_rounds]]
+        oup_masks = [m.eval(i).as_long()
+                     for i in self.bv_oup_masks[:num_rounds]]
+        total_bias = m.eval(
+            self.objectives[self.mode](num_rounds)).as_fraction()
+        active = [m.eval(i).as_long() != 0 for i in self.inps[num_rounds - 1]]
+        if display_paths:
+            self.print_bitrelations(inp_masks, oup_masks)
+            print(&#34;total bias:&#34;, total_bias)
+            print()
+        masks.append((inp_masks, oup_masks, total_bias, active))
+    return masks</code></pre>
+</details>
+</dd>
+<dt id="cryptanalysis.characteristic_searcher.CharacteristicSearcher.init_characteristic_solver"><code class="name flex">
+<span>def <span class="ident">init_characteristic_solver</span></span>(<span>self, prune_level=-1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initializes the S-box structure, S-box function, objective functions, and pruning level.</p>
+<p>This method initializes the structure of the S-box, the S-box function,
+and the objective functions for the solver. It also sets the pruning level
+for the solver. If no pruning level is provided, the method will search for
+the best pruning level.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>prune_level</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The level at which to prune the biases.</dd>
+</dl>
+<p>If not provided or less than 0, the method will search for the best pruning level.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def init_characteristic_solver(self, prune_level=-1):
+    &#34;&#34;&#34;Initializes the S-box structure, S-box function, objective functions, and pruning level.
+
+    This method initializes the structure of the S-box, the S-box function,
+    and the objective functions for the solver. It also sets the pruning level
+    for the solver. If no pruning level is provided, the method will search for
+    the best pruning level.
+
+    Args:
+        prune_level (int, optional): The level at which to prune the biases.
+        If not provided or less than 0, the method will search for the best pruning level.
+    &#34;&#34;&#34;
+    self.initialize_sbox_structure()
+    self.sboxf = Function(
+        &#39;sbox&#39;, BitVecSort(
+            self.box_size), BitVecSort(
+            self.box_size), RealSort())
+    self.initialize_objectives()
+    assert self.solver.check()
+
+    if prune_level &lt; 0:
+        print(&#34;searching best pruning level&#34;)
+        low, high = 0, len(self.sbox) // 4
+        while low &lt;= high:
+            mid = (low + high) // 2
+            print(&#34;trying pruning&#34;, mid)
+            self.solver.push()
+            self.solver.set(timeout=10000)
+            self.add_bias_constraints(mid)
+            if self.solver.check() == sat:
+                print(&#34;success&#34;)
+                low = mid + 1
+            else:
+                print(&#34;failure&#34;)
+                high = mid - 1
+            self.solver.pop()
+        self.solver.set(timeout=0)
+        print(&#34;best pruning&#34;, high)
+        self.prune_level = high
+        self.add_bias_constraints(high)
+    else:
+        self.add_bias_constraints(prune_level)
+        if self.solver.check() == sat:
+            self.prune_level = prune_level
+        else:
+            print(&#34;Provided pruning level unsat, searching optimal pruning&#34;)
+            self.init_characteristic_solver(-1)  # search best pruning</code></pre>
+</details>
+</dd>
+<dt id="cryptanalysis.characteristic_searcher.CharacteristicSearcher.initialize_objectives"><code class="name flex">
+<span>def <span class="ident">initialize_objectives</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initializes the objective functions for the cryptographic solver.</p>
+<p>The method sets up four types of objective functions: 'original_linear',
+'reduced', 'differential', and 'linear'. These objective functions are
+used to guide the solver in finding the optimal solution. Each objective
+function is associated with a lambda function that calculates the objective
+value for a given number of rounds.
+'reduced' objective is called for both linear and differential search
+Other objective functions are just there for reference and easy evaluation
+of bias directly from the model</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def initialize_objectives(self):
+    &#34;&#34;&#34;Initializes the objective functions for the cryptographic solver.
+
+    The method sets up four types of objective functions: &#39;original_linear&#39;,
+    &#39;reduced&#39;, &#39;differential&#39;, and &#39;linear&#39;. These objective functions are
+    used to guide the solver in finding the optimal solution. Each objective
+    function is associated with a lambda function that calculates the objective
+    value for a given number of rounds.
+    &#39;reduced&#39; objective is called for both linear and differential search
+    Other objective functions are just there for reference and easy evaluation
+    of bias directly from the model
+    &#34;&#34;&#34;
+    self.objectives = {
+        # the actual objective, which is just product of bias [0,1/2]
+        &#39;original_linear&#39;: lambda rounds: 2**(self.num_blocks * rounds - 1) * Product([self.sboxf(
+            self.inps[i // self.num_blocks][i % self.num_blocks],
+            self.oups[i // self.num_blocks][i % self.num_blocks])
+            for i in range(self.num_blocks * rounds)
+        ]),
+        # reducing optimization problem of product to sums
+        &#39;reduced&#39;: lambda rounds: sum([
+            self.sboxf(
+                self.inps[i // self.num_blocks][i % self.num_blocks],
+                self.oups[i // self.num_blocks][i % self.num_blocks])
+            for i in range(self.num_blocks * rounds)
+        ]),
+        # objective when the input biases are [0,2**n] just the final
+        # division
+        &#39;differential&#39;: lambda rounds: Product([
+            self.sboxf(
+                self.inps[i // self.num_blocks][i % self.num_blocks],
+                self.oups[i // self.num_blocks][i % self.num_blocks])
+            for i in range(self.num_blocks * rounds)
+        ]) / ((2**self.box_size)**(self.num_blocks * rounds)),
+        &#39;linear&#39;: lambda rounds: 2**(self.num_blocks * rounds - 1) * Product([
+            self.sboxf(
+                self.inps[i // self.num_blocks][i % self.num_blocks],
+                self.oups[i // self.num_blocks][i % self.num_blocks])
+            for i in range(self.num_blocks * rounds)
+        ]) / ((2**self.box_size)**(self.num_blocks * rounds))
+    }</code></pre>
+</details>
+</dd>
+<dt id="cryptanalysis.characteristic_searcher.CharacteristicSearcher.initialize_sbox_structure"><code class="name flex">
+<span>def <span class="ident">initialize_sbox_structure</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initializes the S-box structure for the cryptographic solver.</p>
+<p>This method sets up the structure of the S-box by creating an optimized solver,
+initializing input and output bit vectors for each round, and adding
+constraints for the solver. It also creates a concatenated view of the input
+and output layers for further processing.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def initialize_sbox_structure(self):
+    &#34;&#34;&#34;Initializes the S-box structure for the cryptographic solver.
+
+    This method sets up the structure of the S-box by creating an optimized solver,
+    initializing input and output bit vectors for each round, and adding
+    constraints for the solver. It also creates a concatenated view of the input
+    and output layers for further processing.
+    &#34;&#34;&#34;
+    n = self.box_size
+    self.inps = [[BitVec(&#39;r{}_i{}&#39;.format(r, i), n)
+                  for i in range(self.num_blocks)] for r in range(self.num_rounds + 1)]
+    self.oups = [[BitVec(&#39;r{}_o{}&#39;.format(r, i), n) for i in range(self.num_blocks)]
+                 for r in range(self.num_rounds)]
+    # permutation of output of sboxes are inputs of next round
+    for i in range(self.num_rounds):
+        if self.num_blocks == 1:
+            self.solver.add(self.bitvec_permutation(
+                self.oups[i][0], self.inps[i + 1][0]))
+        else:
+            self.solver.add(self.bitvec_permutation(
+                Concat(self.oups[i]), Concat(self.inps[i + 1])))
+    # all first layer inputs should not be 0
+    self.solver.add(
+        Not(And(*[self.inps[0][i] == 0 for i in range(self.num_blocks)])))
+    for r in range(self.num_rounds):
+        for i in range(self.num_blocks):
+            # if sbox has input, it should have output
+            self.solver.add(
+                Implies(
+                    self.inps[r][i] != 0,
+                    self.oups[r][i] != 0))
+            # if sbox has no input it should not have any output
+            self.solver.add(
+                Implies(
+                    self.inps[r][i] == 0,
+                    self.oups[r][i] == 0))
+
+    # just a concatanated view of the input and output layers
+    if self.num_blocks == 1:
+        self.bv_inp_masks = [self.inps[i][0]
+                             for i in range(self.num_rounds + 1)]
+        self.bv_oup_masks = [self.oups[i][0]
+                             for i in range(self.num_rounds)]
+    else:
+        self.bv_inp_masks = [Concat(self.inps[i])
+                             for i in range(self.num_rounds + 1)]
+        self.bv_oup_masks = [Concat(self.oups[i])
+                             for i in range(self.num_rounds)]</code></pre>
+</details>
+</dd>
+<dt id="cryptanalysis.characteristic_searcher.CharacteristicSearcher.print_bitrelations"><code class="name flex">
+<span>def <span class="ident">print_bitrelations</span></span>(<span>self, inp_masks, out_masks)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Print the input and output masks of a block cipher in a formatted manner.</p>
+<p>:param inp_masks: List of integers, input masks for each round.
+:param out_masks: List of integers, output masks for each round.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def print_bitrelations(self, inp_masks, out_masks):
+    &#34;&#34;&#34;
+    Print the input and output masks of a block cipher in a formatted manner.
+
+    :param inp_masks: List of integers, input masks for each round.
+    :param out_masks: List of integers, output masks for each round.
+    &#34;&#34;&#34;
+    s = self.box_size
+    n = self.num_blocks * s
+
+    def bin_sep(val):
+        v = bin(val)[2:].zfill(n)
+        return &#34;|&#34;.join(v[i:i + s] for i in range(0, n, s))
+
+    rounds = len(out_masks)
+    for i in range(rounds):
+        imask, omask = inp_masks[i], out_masks[i]
+        print(bin_sep(imask))
+        print(&#39; &#39;.join([&#39;-&#39; * s] * (n // s)))
+        print(bin_sep(omask))
+        print()
+    print(bin_sep(inp_masks[-1]))</code></pre>
+</details>
+</dd>
+<dt id="cryptanalysis.characteristic_searcher.CharacteristicSearcher.search_best_masks"><code class="name flex">
+<span>def <span class="ident">search_best_masks</span></span>(<span>self, tolerance=1, choose_best=10, display_paths=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Searches for the best masks with the highest total bias and limited undiscovered active blocks.</p>
+<p>This method searches for the best masks with the highest total bias and a limited number
+of undiscovered active blocks.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>tolerance</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The maximum number of undiscovered active blocks allowed.</dd>
+<dt><strong><code>choose_best</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The number of best masks to choose from.</dd>
+<dt><strong><code>display_paths</code></strong> :&ensp;<code>bool</code>, optional</dt>
+<dd>Whether to display the characteristic paths
+(containing the bits involved) of the solutions.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>A list of tuples. Each tuple contains the input masks, the output masks, and the
+total bias for a solution.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def search_best_masks(self, tolerance=1, choose_best=10, display_paths=True):
+    &#34;&#34;&#34;Searches for the best masks with the highest total bias and limited undiscovered active blocks.
+
+    This method searches for the best masks with the highest total bias and a limited number
+    of undiscovered active blocks.
+
+    Args:
+        tolerance (int, optional): The maximum number of undiscovered active blocks allowed.
+        choose_best (int, optional): The number of best masks to choose from.
+        display_paths (bool, optional): Whether to display the characteristic paths
+                                    (containing the bits involved) of the solutions.
+
+    Returns:
+        list: A list of tuples. Each tuple contains the input masks, the output masks, and the
+              total bias for a solution.
+    &#34;&#34;&#34;
+
+    self.init_characteristic_solver()
+    nr = self.num_rounds
+    discovered = [False for _ in range(self.num_blocks)]
+
+    def istolerable(x):
+        return sum((not i) and j
+                   for i, j in zip(discovered, x[3])) in range(1, tolerance + 1)
+    masks = []
+    while self.solver.check() == sat:
+        curr_masks = self.get_masks(self.num_rounds, choose_best, display_paths=False)
+        for i in curr_masks:
+            self.solutions[i[2]].append(i)
+        curr_masks = list(filter(istolerable, curr_masks))
+        if len(curr_masks) &gt; 0:
+            inp_masks, oup_masks, total_bias, active = max(
+                curr_masks, key=lambda x: (x[2], -sum(x[3])))
+            if display_paths:
+                self.print_bitrelations(inp_masks, oup_masks)
+                print(&#34;total bias:&#34;, total_bias)
+                print()
+            masks.append((inp_masks[0], inp_masks[nr - 1], total_bias))
+            for i, v in enumerate(discovered):
+                if (not v) and active[i]:
+                    discovered[i] = True
+            print(&#34;discovered&#34;, &#34;&#34;.join(map(lambda x: str(int(x)), discovered)))
+            # dont discover biases where all the active blocks come from discovered blocks
+            # i.e. if all the active blocks come from discovered blocks,
+            # it means, all the undiscovered blocks are inactive
+            # i.e it should not be the case where all the undiscovered blocks are
+            # inactive i.e 0
+            self.solver.add(Not(And(
+                    [self.inps[nr - 1][i] == 0 for i, v in enumerate(discovered) if not v]
+                    )))
+    return masks</code></pre>
+</details>
+</dd>
+<dt id="cryptanalysis.characteristic_searcher.CharacteristicSearcher.search_exclusive_masks"><code class="name flex">
+<span>def <span class="ident">search_exclusive_masks</span></span>(<span>self, prune_level=-1, repeat=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Searches for the masks for each block by including only one block and excluding all the others.</p>
+<p>This method searches for the masks for each block by including only one block and excluding
+all the others.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>prune_level</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The level at which to prune the biases.</dd>
+<dt><strong><code>repeat</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The number of times to repeat the search for each block.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>A list of tuples. Each tuple contains the input masks, the output masks, and the
+total bias for a solution.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def search_exclusive_masks(self, prune_level=-1, repeat=1):
+    &#34;&#34;&#34;Searches for the masks for each block by including only one block and excluding all the others.
+
+    This method searches for the masks for each block by including only one block and excluding
+    all the others.
+
+    Args:
+        prune_level (int, optional): The level at which to prune the biases.
+        repeat (int, optional): The number of times to repeat the search for each block.
+
+    Returns:
+        list: A list of tuples. Each tuple contains the input masks, the output masks, and the
+              total bias for a solution.
+    &#34;&#34;&#34;
+    self.init_characteristic_solver(prune_level)
+    masks = []
+    for i in range(self.num_blocks):
+        include_blocks = {i}
+        exclude_blocks = set(range(self.num_blocks)) - include_blocks
+        masks.extend(self.solve_for_blocks(include_blocks, exclude_blocks, num_sols=repeat))
+    return masks</code></pre>
+</details>
+</dd>
+<dt id="cryptanalysis.characteristic_searcher.CharacteristicSearcher.solve_for_blocks"><code class="name flex">
+<span>def <span class="ident">solve_for_blocks</span></span>(<span>self, include_blocks=(), exclude_blocks=(), num_rounds=0, num_sols=1, display_paths=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Solves the characteristic for the specified blocks and maximizes the objective function.</p>
+<p>This method searches the characteristic for the specified blocks,
+maximizes the objective function, and returns the solutions.
+The blocks to include and exclude in the characteristic can be specified.
+The number of rounds and the number of solutions can also be specified.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>include_blocks</code></strong> :&ensp;<code>list</code>, optional</dt>
+<dd>The blocks to definitely include in the characteristic.</dd>
+<dt><strong><code>exclude_blocks</code></strong> :&ensp;<code>list</code>, optional</dt>
+<dd>The blocks to definitely exclude in the characteristic.</dd>
+<dt><strong><code>num_rounds</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The number of rounds for which to solve the characteristic.
+If not provided or 0, the number of rounds will be set to the
+number of rounds of the solver.</dd>
+<dt><strong><code>num_sols</code></strong> :&ensp;<code>int</code>, optional</dt>
+<dd>The number of solutions to return.</dd>
+<dt><strong><code>display_paths</code></strong> :&ensp;<code>bool</code>, optional</dt>
+<dd>Whether to display the paths of the solutions.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>A list of tuples. Each tuple contains the input masks, the output masks, and the
+calculated bias for a solution.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def solve_for_blocks(self, include_blocks=(), exclude_blocks=(),
+        num_rounds=0,
+        num_sols=1,
+        display_paths=True):
+    &#34;&#34;&#34;Solves the characteristic for the specified blocks and maximizes the objective function.
+
+        This method searches the characteristic for the specified blocks,
+        maximizes the objective function, and returns the solutions.
+        The blocks to include and exclude in the characteristic can be specified.
+        The number of rounds and the number of solutions can also be specified.
+
+        Args:
+            include_blocks (list, optional): The blocks to definitely include in the characteristic.
+            exclude_blocks (list, optional): The blocks to definitely exclude in the characteristic.
+            num_rounds (int, optional): The number of rounds for which to solve the characteristic.
+                                         If not provided or 0, the number of rounds will be set to the
+                                         number of rounds of the solver.
+            num_sols (int, optional): The number of solutions to return.
+            display_paths (bool, optional): Whether to display the paths of the solutions.
+
+        Returns:
+            list: A list of tuples. Each tuple contains the input masks, the output masks, and the
+                  calculated bias for a solution.
+        &#34;&#34;&#34;
+    if num_rounds == 0:
+        num_rounds = self.num_rounds
+    else:
+        # cap to initialized struct
+        num_rounds = min(self.num_rounds, num_rounds)
+    while len(self.solver.objectives()):
+        self.solver.pop()  # remove any previous include/exclude block constraints
+    self.solver.push()  # set this as the checkpoint
+    # specify which blocks to definitely include in the characteristic
+    for i in include_blocks:
+        self.solver.add(self.inps[num_rounds - 1][i] != 0)
+    # specify which blocks to definitely exclude in the characteristic
+    for i in exclude_blocks:
+        self.solver.add(self.inps[num_rounds - 1][i] == 0)
+    # print(include_blocks, exclude_blocks)
+    # if a block is neither in include_blocks or exclude_blocks
+    # the solver finds the best path which may or may not set it to active
+    self.solver.maximize(self.objectives[&#39;reduced&#39;](num_rounds))
+    solutions = self.get_masks(num_rounds, num_sols, display_paths)
+    self.solutions[(tuple(sorted(include_blocks)),
+                    tuple(sorted(exclude_blocks)))].extend(solutions)
+    return [(inp_masks[0], inp_masks[-1], calc_bias)
+            for inp_masks, _, calc_bias, _ in solutions]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="cryptanalysis" href="index.html">cryptanalysis</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="cryptanalysis.characteristic_searcher.CharacteristicSearcher" href="#cryptanalysis.characteristic_searcher.CharacteristicSearcher">CharacteristicSearcher</a></code></h4>
+<ul class="">
+<li><code><a title="cryptanalysis.characteristic_searcher.CharacteristicSearcher.add_bias_constraints" href="#cryptanalysis.characteristic_searcher.CharacteristicSearcher.add_bias_constraints">add_bias_constraints</a></code></li>
+<li><code><a title="cryptanalysis.characteristic_searcher.CharacteristicSearcher.bitvec_permutation" href="#cryptanalysis.characteristic_searcher.CharacteristicSearcher.bitvec_permutation">bitvec_permutation</a></code></li>
+<li><code><a title="cryptanalysis.characteristic_searcher.CharacteristicSearcher.get_masks" href="#cryptanalysis.characteristic_searcher.CharacteristicSearcher.get_masks">get_masks</a></code></li>
+<li><code><a title="cryptanalysis.characteristic_searcher.CharacteristicSearcher.init_characteristic_solver" href="#cryptanalysis.characteristic_searcher.CharacteristicSearcher.init_characteristic_solver">init_characteristic_solver</a></code></li>
+<li><code><a title="cryptanalysis.characteristic_searcher.CharacteristicSearcher.initialize_objectives" href="#cryptanalysis.characteristic_searcher.CharacteristicSearcher.initialize_objectives">initialize_objectives</a></code></li>
+<li><code><a title="cryptanalysis.characteristic_searcher.CharacteristicSearcher.initialize_sbox_structure" href="#cryptanalysis.characteristic_searcher.CharacteristicSearcher.initialize_sbox_structure">initialize_sbox_structure</a></code></li>
+<li><code><a title="cryptanalysis.characteristic_searcher.CharacteristicSearcher.print_bitrelations" href="#cryptanalysis.characteristic_searcher.CharacteristicSearcher.print_bitrelations">print_bitrelations</a></code></li>
+<li><code><a title="cryptanalysis.characteristic_searcher.CharacteristicSearcher.search_best_masks" href="#cryptanalysis.characteristic_searcher.CharacteristicSearcher.search_best_masks">search_best_masks</a></code></li>
+<li><code><a title="cryptanalysis.characteristic_searcher.CharacteristicSearcher.search_exclusive_masks" href="#cryptanalysis.characteristic_searcher.CharacteristicSearcher.search_exclusive_masks">search_exclusive_masks</a></code></li>
+<li><code><a title="cryptanalysis.characteristic_searcher.CharacteristicSearcher.solve_for_blocks" href="#cryptanalysis.characteristic_searcher.CharacteristicSearcher.solve_for_blocks">solve_for_blocks</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>
