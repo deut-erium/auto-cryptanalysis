@@ -4,6 +4,9 @@
 - Identify special cases where cryptanalysis is easier or faster.
 - Determine the optimal number of encryptions from the oracle for a given set of parameters for recovery.
 
+## Aesthetics
+- Implement a GUI to display characteristic paths
+
 ## Extending Attacks
 Implement additional cryptanalysis attacks and their various flavors:
 
