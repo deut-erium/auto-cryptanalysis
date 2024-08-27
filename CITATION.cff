@@ -1,0 +1,32 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: auto-cryptanalysis
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Himanshu Sheoran
+identifiers:
+  - type: url
+    value: 'https://github.com/deut-erium/auto-cryptanalysis'
+    description: Github
+repository-code: 'https://github.com/deut-erium/auto-cryptanalysis'
+url: 'https://deut-erium.github.io/auto-cryptanalysis/'
+abstract: >-
+  A tool for automated cryptanalysis of Substitution-Permutation Network (SPN) ciphers
+  is presented. The tool identifies optimal characteristic paths on SPNs to perform 
+  linear and differential cryptanalysis. It employs advanced Satisfiability Modulo Theories 
+  (SMT) analysis using the z3 solver to examine combinations of Substitution Boxes (SBOX)
+  and Permutation Boxes (PBOX). This enables efficient exploration of large state spaces, enhancing
+  the tool's ability to uncover hidden vulnerabilities in SPN-based cryptographic schemes.
+keywords:
+  - SMT
+  - Z3
+  - SPN
+  - Block cipher
+license: GPL
+commit: >-
+  https://github.com/deut-erium/auto-cryptanalysis/commit/fde6065eeeed2ffd6521b1fcaf67202ab3843752
